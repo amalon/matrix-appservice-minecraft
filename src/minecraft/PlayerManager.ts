@@ -29,9 +29,11 @@ export class PlayerManager {
    * For more details see the Player class.
    * NOTE: At least one argument must be provided.
    * @example
+
    let player = getPlayer(null, "5bce3068e4f3489fb66b5723b2a7cdb1");
    // OR
    player = getPlayer("dhmci");
+
    * @param {?string} name Player's name
    * @param {?string} uuid Player's UUID
    * @returns {Promise<void>}

@@ -4,8 +4,8 @@
  */
 import bent, { RequestFunction } from 'bent';
 import sharp from "sharp";
-import * as Responses from "./Types";
-import * as Endpoints from "./Endpoints";
+import * as Responses from "./types";
+import * as Endpoints from "./endpoints";
 
 
 /**
@@ -27,8 +27,6 @@ export class Player {
    * texture, this can include a cape, skin, both, or neither.
    * @param {Texture} texture
    * @returns {Skin}
-   *
-   * @throws {Error}
    */
   private static parseTexture(texture: Responses.Texture): Responses.Skin {
     let decoded = Buffer.from(texture.value, 'base64')
@@ -39,6 +37,8 @@ export class Player {
   /**
    * Retrieves the UUID of this player, this method should always be called
    * when trying to access the UUID property.
+   * Playername -> UUID
+   * @link https://wiki.vg/Mojang_API#Username_-.3E_UUID_at_time
    * @returns {Promise<string>}
    */
   public async getUUID(): Promise<string> {
@@ -73,6 +73,8 @@ export class Player {
 
   /**
    * Retrieves the name history of this player
+   * UUID -> Name history
+   * @link https://wiki.vg/Mojang_API#UUID_-.3E_Name_history
    * @returns {Promise<NHResponse>}
    */
   public async getNameHistory(): Promise<Responses.NHResponse> {
@@ -87,6 +89,7 @@ export class Player {
    * This gets the player's profile
    * GET UUID -> Profile + Skin/Cape
    * @link https://wiki.vg/Mojang_API#UUID_-.3E_Profile_.2B_Skin.2FCape
+   * @returns {ProfileResponse}
    */
   public async getProfile(): Promise<Responses.ProfileResponse> {
     const getJSON = bent('json') as RequestFunction<Responses.ProfileResponse>
