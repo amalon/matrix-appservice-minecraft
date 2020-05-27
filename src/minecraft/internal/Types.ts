@@ -2,7 +2,7 @@
  * Mojang API types
  * credit to https://wiki.vg
  * @author Dylan Hackworth
- * @license MIT
+ * @license GNU GPLv3
  */
 // Playername -> UUID Response
 export type UUIDResponse = {
