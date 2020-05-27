@@ -1,6 +1,8 @@
 # Marco
 LICENSE: [GNU GPLv3](./LICENSE)
+
 Version: Proof Of Concept
+
 Summary: A minecraft relay bridge for Matrix.
 
 ## Features
