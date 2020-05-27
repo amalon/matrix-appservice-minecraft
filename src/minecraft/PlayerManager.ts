@@ -4,7 +4,6 @@
  */
 import { Player } from "./internal/Player";
 import type { Intent } from "matrix-bot-sdk";
-import { LogService } from "matrix-bot-sdk";
 
 
 type MarcoProfile = {
@@ -61,13 +60,13 @@ export class PlayerManager {
    * @returns {Promise<void>}
    */
   public async sync(intent: Intent, player: Player): Promise<void> {
-    LogService.info('marco-matrix', 'A');
     const mxProfile = await intent.underlyingClient.getUserProfile(
       intent.userId
     );
     const playerName = await player.getName();
     const mcProfile = await player.getProfile();
     const mxName: string | undefined = mxProfile['displayname'];
+    const mxAvatar: string | undefined = mxProfile['avatar_url'];
     let marcoProfile: MarcoProfile | undefined;
     try {
       marcoProfile = await intent.underlyingClient.getAccountData("dev.dhdf.marco");
@@ -75,12 +74,10 @@ export class PlayerManager {
       marcoProfile = undefined;
     }
 
-    LogService.info('marco-matrix', 'B');
 
     // Sync display name with in-game player name
     if (mxName != playerName) {
       await intent.underlyingClient.setDisplayName(playerName);
-      LogService.info('marco-matrix', 'C');
     }
 
     // Sync their Matrix's avatar with their in-game skin ...
@@ -90,7 +87,7 @@ export class PlayerManager {
     // if they've updated their skin.
     const skinBase64 = mcProfile.properties[0].value;
 
-    if (!marcoProfile || skinBase64 != marcoProfile.skin64) {
+    if (!mxAvatar) {
       // This will get the skin and crop the head out (see getHead method)
       const head = await player.getHead();
       // This will get sent to the Intent's account data so we can use it
@@ -106,14 +103,11 @@ export class PlayerManager {
         'image/png', // All skins are in PNG format
         playerName + '-head.png'
       );
-      LogService.info('marco-matrix', 'D');
       await intent.underlyingClient.setAvatarUrl(mxUrl)
-      LogService.info('marco-matrix', 'E');
       await intent.underlyingClient.setAccountData(
         "dev.dhdf.marco",
         marcoProfile
       );
-      LogService.info('marco-matrix', 'F');
     }
   }
 }

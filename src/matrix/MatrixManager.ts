@@ -3,7 +3,6 @@
  * @LICENSE GNU GPLv3
  */
 import * as matrix from "matrix-bot-sdk";
-import { LogService } from "matrix-bot-sdk";
 import { RegManager } from "./internal/RegManager";
 import { Config } from "../common/Config";
 import type { Marco, McMessage, MxMessage } from "../Marco";
@@ -88,7 +87,6 @@ export class MatrixManager {
       mcMessage.room,
       mcMessage.body
     );
-    LogService.info('marco-matrix', 'C');
   }
 
   /**

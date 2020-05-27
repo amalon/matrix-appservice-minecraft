@@ -23,13 +23,13 @@ export class Config {
 
   public constructor() {
     this.appservice = {
-      port: 3053,
+      port: 3051,
       bindAddress: '0.0.0.0',
       homeserverName: 'matrix.org',
       homeserverURL: 'https://matrix.org'
     };
     this.webserver = {
-      port: 3054,
+      port: 3052,
       privKey: uuid()
     }
   }
