@@ -13,13 +13,21 @@ and [Minecraft](https://www.minecraft.net/)
       - [x] m.text
    - [ ] Send messages
       - [ ] Player events (ie deaths, kicks, advancements, etc.)
+         - [ ] Joins/Leaves/kicks
+         - [ ] Deaths
+            - [ ] Easy (hit the ground too hard, etc)
+            - [ ] Hard (<player> was slain by <player/mob> using <item>, <player> walked into fire whilst fighting <player/mob>, etc.)
+         - [ ] Advancements
       - [x] Player chat messages / emotes
+      - [ ] Arbitrary command execution from matrix
  - [x] Matrix
    - [x] In-sync Profiles
       - [x] Player's skin as matrix avatar
+         - [ ] 3D render
       - [x] Player's name as matrix display name
+      - [ ] Presence Status
    - [x] Bridge / Unbridge with commands
-
+   - [ ] Counters
 
 ## Description
 Marco is a Matrix appservice that bridges a Matrix room to a Minecraft
