@@ -1,15 +1,14 @@
-/**
- * @author Dylan Hackworth <dhpf@pm.me>
- * @LICENSE GNU GPLv3
- */
 import { NextFunction, Request, Response } from "express";
 import * as Errors from "../../errors";
 import { Marco, McMessage } from "../../../../Marco";
 import { Bridge } from "../../../../common/Bridge";
+import { LogService } from "matrix-bot-sdk";
 
 
 /**
  * POST /chat/
+ * Polo will call this endpoint when there's a new message in the Minecraft
+ * chat
  * Example body:
  * {
  *   "body": <player message string>,
@@ -27,6 +26,8 @@ export async function postChat(req: Request, res: Response): Promise<void> {
   const marco: Marco = req['marco'];
   // @ts-ignore
   const bridge: Bridge = req['bridge'];
+  // @ts-ignore
+  const id: string = req['id'];
   const body = req.body;
   const message: string = body['body'];
   const playerRaw: { name: string, uuid: string } = body.player;
@@ -41,6 +42,11 @@ export async function postChat(req: Request, res: Response): Promise<void> {
   await marco.onMcChat(mcMessage);
   res.status(200);
   res.end();
+  LogService.info(
+    'marco-webserver',
+    `Request ${id}`,
+    'finished.'
+  );
 }
 
 /**

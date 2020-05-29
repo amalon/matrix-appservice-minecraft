@@ -1,10 +1,6 @@
-/**
- * @author Dylan Hackworth <dhpf@pm.me>
- * @LICENSE GNU GPLv3
- */
 import bent, { RequestFunction } from 'bent';
 import sharp from "sharp";
-import * as Responses from "./types";
+import { Responses, Skin, Texture } from './types';
 import * as Endpoints from "./endpoints";
 
 
@@ -28,7 +24,7 @@ export class Player {
    * @param {Texture} texture
    * @returns {Skin}
    */
-  private static parseTexture(texture: Responses.Texture): Responses.Skin {
+  private static parseTexture(texture: Texture): Skin {
     let decoded = Buffer.from(texture.value, 'base64')
       .toString('utf-8');
     return JSON.parse(decoded);
@@ -46,7 +42,7 @@ export class Player {
       return this.uuid;
     else {
       const name = await this.getName();
-      const getJSON = bent('json') as RequestFunction<Responses.UUIDResponse>;
+      const getJSON = bent('json') as RequestFunction<Responses.UUID>;
       const target = Endpoints.get.uuid.replace(/({playername})/g, name);
       const res = await getJSON(target);
 
@@ -75,10 +71,10 @@ export class Player {
    * Retrieves the name history of this player
    * UUID -> Name history
    * @link https://wiki.vg/Mojang_API#UUID_-.3E_Name_history
-   * @returns {Promise<NHResponse>}
+   * @returns {Promise<NameHistory>}
    */
-  public async getNameHistory(): Promise<Responses.NHResponse> {
-    const getJSON = bent('json') as RequestFunction<Responses.NHResponse>;
+  public async getNameHistory(): Promise<Responses.NameHistory> {
+    const getJSON = bent('json') as RequestFunction<Responses.NameHistory>;
     const uuid = await this.getUUID();
     const target = Endpoints.get.nameHistory.replace(/({uuid})/g, uuid);
 
@@ -89,10 +85,10 @@ export class Player {
    * This gets the player's profile
    * GET UUID -> Profile + Skin/Cape
    * @link https://wiki.vg/Mojang_API#UUID_-.3E_Profile_.2B_Skin.2FCape
-   * @returns {ProfileResponse}
+   * @returns {Promise<Profile>}
    */
-  public async getProfile(): Promise<Responses.ProfileResponse> {
-    const getJSON = bent('json') as RequestFunction<Responses.ProfileResponse>
+  public async getProfile(): Promise<Responses.Profile> {
+    const getJSON = bent('json') as RequestFunction<Responses.Profile>
     const uuid = await this.getUUID();
     const target = Endpoints.get.profile.replace(/({uuid})/g, uuid);
 

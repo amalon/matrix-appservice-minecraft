@@ -1,7 +1,3 @@
-/**
- * @author Dylan Hackworth <dhpf@pm.me>
- * @LICENSE GNU GPLv3
- */
 import * as matrix from "matrix-bot-sdk";
 import { RegManager } from "./internal/RegManager";
 import { Config } from "../common/Config";

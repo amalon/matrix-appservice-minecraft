@@ -1,7 +1,3 @@
-/**
- * @author Dylan Hackworth <dhpf@pm.me>
- * @LICENSE GNU GPLv3
- */
 import type { Config } from "../../common/Config";
 import type { IAppserviceRegistration } from "matrix-bot-sdk";
 import fs from "fs";

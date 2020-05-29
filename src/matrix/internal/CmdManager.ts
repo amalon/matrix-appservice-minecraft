@@ -1,7 +1,3 @@
-/**
- * @author Dylan Hackworth
- * @LICENSE GNU GPLv3
- */
 import { Appservice, MatrixClient } from "matrix-bot-sdk";
 import { Marco } from "../../Marco";
 import { BridgedAlreadyError } from "../../common/errors";

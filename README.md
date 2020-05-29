@@ -3,15 +3,16 @@ LICENSE: [GNU GPLv3](./LICENSE)
 
 Version: Proof Of Concept
 
-Summary: A minecraft relay bridge for Matrix.
+Summary: A bridge between [Matrix](https://matrix.org/) 
+and [Minecraft](https://www.minecraft.net/)
 
 ## Features
  - [x] Minecraft
    - [x] Retrieve matrix messages
       - [x] m.emotes
       - [x] m.text
-   - [x] Send messages
-      - [ ] Player events (ie deaths, kicks, etc.)
+   - [ ] Send messages
+      - [ ] Player events (ie deaths, kicks, advancements, etc.)
       - [x] Player chat messages / emotes
  - [x] Matrix
    - [x] In-sync Profiles
@@ -21,49 +22,40 @@ Summary: A minecraft relay bridge for Matrix.
 
 
 ## Description
-Marco is half of a project. The other half is 
-[Polo](https://github.com/dhghf/polo) (a play on words). Both Marco and Polo
-work together to establish a Matrix relay bridge between multiple minecraft
-servers and corresponding Matrix rooms.
+Marco is a Matrix appservice that bridges a Matrix room to a Minecraft
+server by communicating to a plugin called 
+"[Polo](https://github.com/dhghf/polo)".
 
-Why split them up to two counter-parts? Because to keep the Matrix
-appservice users up-to-date takes up a lot a performance that a minecraft
-server host should not have to deal with so Polo throws all the
-information at Marco where it is processed and relayed back and forth
-between the Minecraft chat, and a Matrix room.
+Polo simply sends all the new messages from the Minecraft chat to Marco
+which then Marco sends it to Matrix. Then Polo does a get request to see
+if there are any new messages in the Matrix room and sends those messages
+to the Minecraft chat.
 
-Polo will keep Marco up-to-date on all the messages on Minecraft by sending
-POST requests that contain the player and the body of the message.
- - Polo -> Marco -> Matrix
 
-Polo will periodically make GET requests to see all the new messages since
-the last time requested
- - Polo <- Marco <- Matrix
-
-This ultimately helps Minecraft hosts setup a bridge easily:
+### Why split them up to two parts?
+To keep Matrix and Minecraft chat in sync takes up a lot of
+performance. Marco does all of this externally to take a load off of the
+Minecraft server host. As long as there is at least one instance of Marco
+running any Minecraft server can communicate with it. This makes it easy for a
+Minecraft server host to establish a bridge just by doing the following:
  1. Add the plugin
  2. Set the host resolvable where Marco is running
  3. Set a bridge token
  4. Enjoy.
 
-It is up to whoever is running Marco to keep the performance steady and
-configuration clean.
 
-## Visual Representation (TL;DR)
+### How does Marco + Polo Work?
+Polo will keep Marco up-to-date on all the messages on Minecraft by sending
+POST requests that contain the player and the body of the message.
+ - Polo -> Marco -> Matrix
 
- 1. matrix user: `!marco bridge !example:example.com`
- 2. marco: Here's a token `12356789`
- 3. minecraft user: `/bridge 12345679`
-
-Once they've executed the bridge command Polo (the minecraft plugin) will
-periodically stay up to date on all the new messages in the Matrix room as
-well as letting Marco know all the messages appearing on the Minecraft
-server.
+Polo will periodically make GET requests to see all the new messages since
+the last time requested.
+ - Polo <- Marco <- Matrix
 
 ## Setup
-As this is still a proof of concept the setup / configuration may change
-once there is a major release so I am halting on writing a setup process
-until it's sophisticated.
+(in development)
 
-## Contact
+## Keep in Touch
+Join us in our Matrix room
 [#minecraft:dhdf.dev](https://matrix.to/#/!RUdwKvpeiDnWUyWSMJ:dhdf.dev?via=dhdf.dev)

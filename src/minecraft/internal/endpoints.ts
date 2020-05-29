@@ -1,15 +1,35 @@
 /**
  * Mojang API endpoints
- * credit to https://wiki.vg
- * @author Dylan Hackworth
- * @license GNU GPLv3
+ * credit to wiki.vg
+ * @link https://wiki.vg
+ *
+ * These are constants that point to all the endpoints we use in Player.ts.
+ * Here's a map of all of them:
+ *
+ * - get.uuid: Playername -> UUID
+ *   - Replace "{playername}" with the playername you're targeting
+ *
+ * - get.nameHistory: UUID -> Name history
+ *   - Replace "{uuid}" with the player's UUID you're targeting
+ *
+ * - get.profile: UUID -> Profile + Skin/Cape
+ *   - Replace "{uuid}" with the player's UUID you're targeting
+ */
+
+/**
+ * This is all the servers we utilize.
+ * NOTE: They should all utilize TLS if it's offered
+ * @const servers
  */
 const servers = {
   api: "https://api.mojang.com",
   sessions: "https://sessionserver.mojang.com"
 }
 
-// All the GET endpoints
+/**
+ * All the GET endpoints
+ * @const get
+ */
 export const get = {
   /**
    * Playername -> UUID

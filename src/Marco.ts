@@ -1,7 +1,3 @@
-/**
- * @author Dylan Hackworth <dhpf@pm.me>
- * @LICENSE GNU GPLv3
- */
 import { WebServer } from "./webserver";
 import { Config } from "./common/Config";
 import { BridgeManager } from "./common/BridgeManager";

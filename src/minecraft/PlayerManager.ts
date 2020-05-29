@@ -1,7 +1,3 @@
-/**
- * @author Dylan Hackworth <dhpf@pm.me>
- * @LICENSE GNU GPLv3
- */
 import { Player } from "./internal/Player";
 import type { Intent } from "matrix-bot-sdk";
 

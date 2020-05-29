@@ -1,9 +1,3 @@
-/**
- * This webserver currently has one endpoint which is /head/ see head.ts
- * file in the routes directory.
- * @author Dylan Hackworth
- * @license GNU GPLv3
- */
 import express, {
   Application,
   NextFunction,
@@ -13,7 +7,7 @@ import express, {
 import type { Config } from "../common/Config";
 import type { Marco } from "../Marco";
 import { NotBridgedError } from "../common/errors";
-import { chatRouter } from "./internal/routes/chat/chatRouter";
+import { chatRouter } from "./internal/routes";
 import { LogService } from "matrix-bot-sdk";
 import { v1 as uuid } from "uuid";
 import * as Errors from "./internal/errors";
@@ -99,6 +93,7 @@ export class WebServer {
   private checkAuth(req: Request, res: Response, next: NextFunction) {
     const auth = req.header('Authorization');
 
+    // Let's see if they actually provided an authorization header
     if (auth == undefined) {
       res.status(401);
       res.end();
@@ -107,31 +102,41 @@ export class WebServer {
     // split = ['Bearer', <access token>]
     const split = auth.split(' ');
 
+    // Make sure they provided "Bearer <access token>"
     if (split.length < 2) {
       res.status(401);
       res.end();
       return;
     }
 
+    // This is the token they provided in the authorization header
     const token = split[1];
 
     try {
+      // The BrideManager associates tokens with rooms and if this is a
+      // valid token it will result in a Bridge type otherwise it will
+      // throw a NotBridgedError
       const bridge = this.marco.bridges.getBridge(token);
+      // This represents the identifier for the request being made (for
+      // logging purposes)
       const id = uuid();
 
+      // So if it reached this point then it's a valid request and we can
+      // start logging it and all the steps marco is going through to
+      // process the request
       LogService.info(
-        "webserver",
-        `[${id}] Request from ${req.ip}\n` +
-        `[${req.method}] Target: ${req.path}\n` +
-        `User-Agent: ${req.header('User-Agent')}\n` +
-        `Body: ${req.body}\n` +
-        `Length: ${req.readableLength}\n`
+        "marco-webserver",
+        `Request ${id}\n` +
+        `Endpoint: ${req.method} ${req.path}\n` +
+        `User-Agent: ${req.header('User-Agent')}\n`
       );
 
       // @ts-ignore
       req['marco'] = this.marco;
       // @ts-ignore
       req['bridge'] = bridge;
+      // @ts-ignore
+      req['id'] = id;
 
       next();
     } catch (err) {
