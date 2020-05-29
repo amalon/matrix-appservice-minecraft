@@ -59,3 +59,7 @@ the last time requested.
 ## Keep in Touch
 Join us in our Matrix room
 [#minecraft:dhdf.dev](https://matrix.to/#/!RUdwKvpeiDnWUyWSMJ:dhdf.dev?via=dhdf.dev)
+
+## Leave a Star!
+It means a lot
+
