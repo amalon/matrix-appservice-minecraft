@@ -56,25 +56,27 @@ export class CmdManager {
   private static async bridgeErrorHandler(client: MatrixClient,
                                           room: string,
                                           err: any): Promise<void> {
-    if (err instanceof Error) {
-      // This means they didn't provide a room or they did it poorly
+    if (err instanceof BridgedAlreadyError) {
+      await client.sendText(
+        room,
+        "This room is already bridged to a server.",
+      );
+    } else if (err instanceof Error) {
       if (err.message == 'Invalid room ID or alias') {
         await client.sendText(
           room,
           CmdManager.help
         );
+      } else {
+        await client.sendText(
+          room,
+          "Something went wrong: " + err.message
+        );
       }
-      // The room they're trying to bridge is already connected to a
-      // minecraft server
-    } else if (err instanceof BridgedAlreadyError) {
-      await client.sendText(
-        room,
-        "This room is already bridged to a server.",
-      );
     } else {
       await client.sendText(
         room,
-        "An internal error occurred."
+        'Something went wrong'
       );
     }
   }
@@ -86,7 +88,9 @@ export class CmdManager {
    * @param {string} body Text-body of the command
    * @returns {Promise<void>}
    */
-  public async onMxMessage(room: string, sender: string, body: string): Promise<void> {
+  public async onMxMessage(room: string,
+                           sender: string,
+                           body: string): Promise<void> {
     // args = ["!marco", "bridge" || "unbridge" || undefined]
     const args = body.split(' ');
     const client = this.appservice.botClient;

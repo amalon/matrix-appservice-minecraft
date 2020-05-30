@@ -1,7 +1,7 @@
 # Marco
 LICENSE: [GNU GPLv3](./LICENSE)
 
-Version: Proof Of Concept
+Version: Proof of Concept
 
 Summary: A bridge between [Matrix](https://matrix.org/) 
 and [Minecraft](https://www.minecraft.net/)
