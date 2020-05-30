@@ -1,12 +1,9 @@
-/**
- * @author Dylan Hackworth <dhpf@pm.me>
- * @LICENSE GNU GPLv3
- */
 import { Bridge } from "./Bridge";
 import { BridgedAlreadyError, NotBridgedError } from "./errors";
 import * as jose from 'jose';
 import { v1 as uuid } from 'uuid';
 import { Config } from "./Config";
+import { DBController } from "../db/DBController";
 
 
 /**
@@ -16,11 +13,11 @@ import { Config } from "./Config";
  * sure the interactions are valid.
  */
 export class BridgeManager {
-  private readonly bridges: Map<string, Bridge>
+  private readonly db: DBController;
   private readonly config: Config;
 
   constructor(config: Config) {
-    this.bridges = new Map();
+    this.db = new DBController();
     this.config = config;
   }
 
@@ -31,12 +28,7 @@ export class BridgeManager {
    * @throws {NotBridgedError}
    */
   public getBridge(id: string): Bridge {
-    for (const bridge of this.bridges.values()) {
-      if (bridge.room == id || bridge.id == id) {
-        return bridge;
-      }
-    }
-    throw new NotBridgedError();
+    return this.db.bridges.getBridge(id);
   }
 
   /**
@@ -45,12 +37,16 @@ export class BridgeManager {
    * @returns {boolean}
    */
   public isBridged(id: string): boolean {
-    try {
-      const bridge = this.getBridge(id);
-      return bridge != undefined
-    } catch (err) {
-      return false;
-    }
+    return this.db.bridges.isBridged(id);
+  }
+
+  /**
+   * This checks if a room ID is associated with a bridge already
+   * @param {string} room Room ID
+   * @returns {boolean}
+   */
+  public isRoomBridged(room: string): boolean {
+    return this.db.bridges.isRoomBridged(room);
   }
 
   /**
@@ -60,11 +56,18 @@ export class BridgeManager {
    * @throws {BridgedAlreadyError}
    */
   public bridge(room: string): Bridge {
-    const signed = jose.JWT.sign(
-      { room, id: uuid() },
-      this.config.webserver.privKey
-    );
-    return this.setBridge(signed, room);
+    const isBridged = this.isRoomBridged(room);
+
+    if (!isBridged) {
+      const id = jose.JWT.sign(
+        { room, id: uuid() },
+        this.config.webserver.privKey
+      );
+      this.db.bridges.setBridge(id, room);
+      return new Bridge(id, room);
+    } else {
+      throw new BridgedAlreadyError();
+    }
   }
 
   /**
@@ -73,24 +76,6 @@ export class BridgeManager {
    * @returns {boolean} Whether or not it was successful
    */
   public unbridge(id: string): boolean {
-    return this.bridges.delete(id);
-  }
-
-  /**
-   * This establishes a new bridge
-   * @param {string} id Bridge identifier
-   * @param {string} room Room bridged with
-   * @returns {Bridge}
-   * @throws {BridgedAlreadyError}
-   */
-  private setBridge(id: string, room: string): Bridge {
-    const isBridged = this.isBridged(room);
-
-    if (!isBridged) {
-      const bridge = new Bridge(id, room);
-      this.bridges.set(id, bridge);
-      return bridge;
-    } else
-      throw new BridgedAlreadyError();
+    return this.db.bridges.unBridge(id);
   }
 }

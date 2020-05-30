@@ -1,9 +1,4 @@
 /**
- * @author Dylan Hackworth <dhpf@pm.me>
- * @LICENSE GNU GPLv3
- */
-
-/**
  * This class holds the details about an established bridge.
  * @property {string} id The current identifier is a JWT.
  *  <jwt>.room: string = room bridged
