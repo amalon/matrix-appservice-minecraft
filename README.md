@@ -11,6 +11,7 @@ and [Minecraft](https://www.minecraft.net/)
    - [x] Retrieve matrix messages
       - [x] m.emotes
       - [x] m.text
+      - [ ] m.notice
    - [ ] Send messages
       - [ ] Player events (ie deaths, kicks, advancements, etc.)
          - [ ] Joins/Leaves/kicks
@@ -23,11 +24,11 @@ and [Minecraft](https://www.minecraft.net/)
  - [x] Matrix
    - [x] In-sync Profiles
       - [x] Player's skin as matrix avatar
-         - [ ] 3D render
+         - [ ] [3D Head Render](https://crafatar.com/)
       - [x] Player's name as matrix display name
       - [ ] Presence Status
    - [x] Bridge / Unbridge with commands
-   - [ ] Counters
+   - [ ] [Counters](https://github.com/vector-im/riot-web/blob/develop/docs/labs.md#render-simple-counters-in-room-header-feature_state_counters)
 
 ## Description
 Marco is a Matrix appservice that bridges a Matrix room to a Minecraft
