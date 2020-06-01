@@ -95,7 +95,7 @@ export class MatrixManager {
       // what matters most is that the message gets to the room.
       await intent.sendText(
         mcMessage.room,
-        mcMessage.body
+        mcMessage.message
       );
     }
   }
@@ -129,16 +129,15 @@ export class MatrixManager {
    * since there is no way of redacting the corresponding message on
    * Minecraft or even guaranteeing that the message gets taken out of the
    * list before the Minecraft server checks in. Sorry won't fix :(
-   * @param {Bridge} bridge
    * @param {MxMessage} message
    */
-  public addNewMxMessage(bridge: Bridge, message: MxMessage) {
-    const newMxMessages = this.newMxMessages.get(bridge.room) || [];
+  public addNewMxMessage(message: MxMessage) {
+    const newMxMessages = this.newMxMessages.get(message.room) || [];
 
     if (!this.appservice.isNamespacedUser(message.sender))
       newMxMessages.push(message);
 
-    this.newMxMessages.set(bridge.room, newMxMessages);
+    this.newMxMessages.set(message.room, newMxMessages);
   }
 
   /**
@@ -168,7 +167,7 @@ export class MatrixManager {
       return;
     const body = content['body'];
     const msgtype: string = content['msgtype'];
-    const isBridged = this.marco.bridges.isBridged(room);
+    const isBridged = this.marco.bridges.isRoomBridged(room);
 
     // Handle commands first
     if (msgtype == 'm.text' && body.startsWith(CmdManager.prefix)) {

@@ -3,6 +3,7 @@ import { Config } from "./common/Config";
 import { BridgeManager } from "./common/BridgeManager";
 import { MatrixManager } from "./matrix";
 import { Player, PlayerManager } from "./minecraft";
+import { DBController } from "./db/DBController";
 
 
 /**
@@ -30,7 +31,7 @@ export type MxMessage = {
  */
 export type McMessage = {
   player: Player;
-  body: string;
+  message: string;
   room: string;
 }
 
@@ -61,10 +62,11 @@ export class Marco {
 
   constructor() {
     const config = Config.getConfig();
+    const db = new DBController(config);
 
     this.webserver = new WebServer(config, this);
     this.matrix = new MatrixManager(config, this);
-    this.bridges = new BridgeManager(config);
+    this.bridges = new BridgeManager(config, db);
     this.players = new PlayerManager();
   }
 
@@ -84,9 +86,10 @@ export class Marco {
    * @throws {NotBridgedError}
    */
   public onMxChat(message: MxMessage) {
-    const bridge = this.bridges.getBridge(message.room);
+    const isBridged = this.bridges.isRoomBridged(message.room);
 
-    this.matrix.addNewMxMessage(bridge, message);
+    if (isBridged)
+      this.matrix.addNewMxMessage(message);
   }
 
   /**

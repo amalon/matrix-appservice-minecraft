@@ -48,6 +48,14 @@ export class WebServer {
 
   private vibeCheck(req: Request, res: Response): void {
     const auth = req.header('Authorization');
+    const id = uuid();
+
+    LogService.info(
+      "marco:WebServer",
+      `Vibe Request ${id}\n` +
+      ` - User-Agent: ${req.header('User-Agent')}`
+    );
+
     try {
       res.setHeader('Content-Type', 'application/json');
 
@@ -60,13 +68,26 @@ export class WebServer {
       }
 
       const token = auth.split(' ')[1];
+
       if (!token) {
         res.status(401);
         res.send({ "status": "BAD", "error": Errors.noTokenError });
         res.end();
         return;
       }
+
+      LogService.info(
+        "marco:WebServer",
+        `Vibe Request ${id}\n` +
+        ` - token: ${token}`
+      );
       const bridge = this.marco.bridges.getBridge(token);
+
+      LogService.info(
+        "marco:WebServer",
+        `Vibe Request ${id}\n` +
+        ` - Valid Bridge`
+      );
 
       res.status(200);
       res.send({
@@ -77,11 +98,29 @@ export class WebServer {
 
     } catch (err) {
       if (err instanceof NotBridgedError) {
+        LogService.warn(
+          "marco:WebServer",
+          `Vibe Request ${id}\n` +
+          `Invalid Bridge`
+        );
         res.status(401);
         res.send({ "status": "BAD", "error": Errors.invalidTokenError });
         res.end();
+      } else {
+        LogService.error(
+          "marco:WebServer",
+          err
+        );
+        res.status(500);
+        res.send({ "status": "BAD", "error": Errors.serverError })
       }
     }
+
+    LogService.info(
+      "marco:WebServer",
+      `Vibe Request ${id}\n` +
+      ` - Finished`
+    );
   }
 
   /**
@@ -91,6 +130,17 @@ export class WebServer {
    * @param {NextFunction} next
    */
   private checkAuth(req: Request, res: Response, next: NextFunction) {
+    // This represents the identifier for the request being made (for
+    // logging purposes)
+    const id = uuid();
+
+    LogService.info(
+      "marco:WebServer",
+      `Request ${id}\n` +
+      ` - Endpoint: ${req.method} ${req.path}\n` +
+      ` - User-Agent: ${req.header('User-Agent')}`
+    );
+
     const auth = req.header('Authorization');
 
     // Let's see if they actually provided an authorization header
@@ -117,18 +167,11 @@ export class WebServer {
       // valid token it will result in a Bridge type otherwise it will
       // throw a NotBridgedError
       const bridge = this.marco.bridges.getBridge(token);
-      // This represents the identifier for the request being made (for
-      // logging purposes)
-      const id = uuid();
 
-      // So if it reached this point then it's a valid request and we can
-      // start logging it and all the steps marco is going through to
-      // process the request
       LogService.info(
-        "marco-webserver",
+        "marco:WebServer",
         `Request ${id}\n` +
-        `Endpoint: ${req.method} ${req.path}\n` +
-        `User-Agent: ${req.header('User-Agent')}\n`
+        " - Authorized"
       );
 
       // @ts-ignore
@@ -146,7 +189,6 @@ export class WebServer {
         res.end();
       }
     }
-
   }
 }
 

@@ -2,6 +2,7 @@ import fs from "fs";
 import mkdirp from 'mkdirp';
 import yaml from "yaml";
 import { v4 as uuid } from "uuid";
+import { LogService } from "matrix-bot-sdk";
 
 
 export type AppserviceConfig = {
@@ -60,8 +61,10 @@ export class Config {
     if (fs.existsSync(configPath)) {
       const configBuff = fs.readFileSync(configPath);
 
+      LogService.debug('marco:Config', 'Restored configuration.');
       return yaml.parse(configBuff.toString());
     } else {
+      LogService.debug('marco:Config', 'Generating default configuration.');
       return Config.genConfig(location);
     }
   }
