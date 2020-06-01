@@ -4,6 +4,7 @@ import * as jose from 'jose';
 import { v1 as uuid } from 'uuid';
 import { Config } from "./Config";
 import { DBController } from "../db/DBController";
+import { BridgeTable } from "../db/BridgeTable";
 
 
 /**
@@ -13,11 +14,11 @@ import { DBController } from "../db/DBController";
  * sure the interactions are valid.
  */
 export class BridgeManager {
-  private readonly db: DBController;
+  private readonly db: BridgeTable;
   private readonly config: Config;
 
-  constructor(config: Config) {
-    this.db = new DBController();
+  constructor(config: Config, db: DBController) {
+    this.db = db.bridges;
     this.config = config;
   }
 
@@ -28,7 +29,7 @@ export class BridgeManager {
    * @throws {NotBridgedError}
    */
   public getBridge(id: string): Bridge {
-    return this.db.bridges.getBridge(id);
+    return this.db.getBridge(id);
   }
 
   /**
@@ -37,7 +38,7 @@ export class BridgeManager {
    * @returns {boolean}
    */
   public isBridged(id: string): boolean {
-    return this.db.bridges.isBridged(id);
+    return this.db.isBridged(id);
   }
 
   /**
@@ -46,7 +47,7 @@ export class BridgeManager {
    * @returns {boolean}
    */
   public isRoomBridged(room: string): boolean {
-    return this.db.bridges.isRoomBridged(room);
+    return this.db.isRoomBridged(room);
   }
 
   /**
@@ -63,7 +64,7 @@ export class BridgeManager {
         { room, id: uuid() },
         this.config.webserver.privKey
       );
-      this.db.bridges.setBridge(id, room);
+      this.db.setBridge(id, room);
       return new Bridge(id, room);
     } else {
       throw new BridgedAlreadyError();
@@ -76,6 +77,6 @@ export class BridgeManager {
    * @returns {boolean} Whether or not it was successful
    */
   public unbridge(id: string): boolean {
-    return this.db.bridges.unBridge(id);
+    return this.db.unBridge(id);
   }
 }

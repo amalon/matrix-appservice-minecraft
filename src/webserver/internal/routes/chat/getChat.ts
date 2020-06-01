@@ -28,6 +28,6 @@ export function getChat(req: Request, res: Response) {
   LogService.info(
     'marco-webserver',
     `Request ${id}`,
-    'finished.'
+    ' - Finished.'
   );
 }

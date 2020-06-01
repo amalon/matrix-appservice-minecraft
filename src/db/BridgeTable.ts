@@ -40,7 +40,7 @@ export class BridgeTable {
     const row = this.db.prepare(
       'SELECT room FROM bridges WHERE id=?'
     ).get(id);
-    const roomID = row.room;
+    const roomID: string | undefined = row?.room;
 
     if (roomID) {
       return new Bridge(id, roomID);
@@ -99,7 +99,7 @@ export class BridgeTable {
     this.db.prepare(
       'CREATE TABLE IF NOT EXISTS bridges (' +
       'id text primary key NOT NULL,' +
-      'room text NOT NULL' +
+      'room text primary key NOT NULL' +
       ')'
     ).run();
   }

@@ -11,7 +11,7 @@ import { LogService } from "matrix-bot-sdk";
  * chat
  * Example body:
  * {
- *   "body": <player message string>,
+ *   "message": <player message string>,
  *   "player": {
  *     "name": <player name string>,
  *     "uuid": <player uuid string>
@@ -29,12 +29,12 @@ export async function postChat(req: Request, res: Response): Promise<void> {
   // @ts-ignore
   const id: string = req['id'];
   const body = req.body;
-  const message: string = body['body'];
+  const message: string = body['message'];
   const playerRaw: { name: string, uuid: string } = body.player;
   const player = await marco.players.getPlayer(playerRaw.name, playerRaw.uuid);
   const mcMessage: McMessage = {
     room: bridge.room,
-    body: message,
+    message,
     player
   }
 
@@ -45,7 +45,7 @@ export async function postChat(req: Request, res: Response): Promise<void> {
   LogService.info(
     'marco-webserver',
     `Request ${id}`,
-    'finished.'
+    '- Finished.'
   );
 }
 
@@ -57,7 +57,15 @@ export async function postChat(req: Request, res: Response): Promise<void> {
  * @param {NextFunction} next
  */
 export function checkIntegrity(req: Request, res: Response, next: NextFunction) {
+  // @ts-ignore
+  const reqID = req['id'];
   const body = req.body;
+
+  LogService.info(
+    'marco:WebServer',
+    `Request ${reqID}\n` +
+    ' - Checking body integrity'
+  )
 
   // Check if body is defined
   if (body == undefined) {
@@ -66,7 +74,7 @@ export function checkIntegrity(req: Request, res: Response, next: NextFunction) 
   }
 
   // Check message
-  const message = body['body'];
+  const message = body['message'];
   if (message == undefined) {
     fail(res, Errors.noMessageError);
     return;
@@ -74,6 +82,12 @@ export function checkIntegrity(req: Request, res: Response, next: NextFunction) 
     fail(res, Errors.messageTypeError);
     return;
   }
+
+  LogService.info(
+    'marco:WebServer',
+    `Request ${reqID}\n` +
+    ' - Message: ' + message
+  )
 
   // Check player
   const player = body['player'];
@@ -95,6 +109,12 @@ export function checkIntegrity(req: Request, res: Response, next: NextFunction) 
     return;
   }
 
+  LogService.info(
+    'marco:WebServer',
+    `Request ${reqID}\n` +
+    ' - Player name: ' + name
+  )
+
   // Check <player>.uuid
   const uuid = player.uuid;
   if (uuid == undefined) {
@@ -104,10 +124,19 @@ export function checkIntegrity(req: Request, res: Response, next: NextFunction) 
     return;
   }
 
+  LogService.info(
+    'marco:WebServer',
+    `Request ${reqID}\n` +
+    ` - Message: ${message}\n` +
+    ` - Player:\n` +
+    `   - UUID: ${uuid}\n` +
+    `   - Name: ${name}`
+  );
+
   /**
    * If the integrity passed this is what the body should look like:
    * {
-   *   "body": "The body of the message",
+   *   "message": "The body of the message",
    *   "player" {
    *     "name": "player name",
    *     "uuid": "player uuid"

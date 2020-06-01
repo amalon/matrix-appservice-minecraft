@@ -1,7 +1,7 @@
 # Marco
 LICENSE: [GNU GPLv3](./LICENSE)
 
-Version: 0.9.2
+Version: 0.9.3
 
 Summary: A bridge between [Matrix](https://matrix.org/) 
 and [Minecraft](https://www.minecraft.net/)

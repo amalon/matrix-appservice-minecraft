@@ -4,6 +4,15 @@
  */
 
 /**
+ * Something went wrong internally
+ * @const serverError
+ */
+export const serverError = {
+  "error": "SERVER_ERROR",
+  "message": "Marco fricked up"
+};
+
+/**
  * Polo provided a token but it's invalid / not bridged with anything.
  * @const invalidTokenError
  */
