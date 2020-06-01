@@ -24,7 +24,7 @@ export class Player {
    * @param {Texture} texture
    * @returns {Skin}
    */
-  private static parseTexture(texture: Texture): Skin {
+  public static parseTexture(texture: Texture): Skin {
     let decoded = Buffer.from(texture.value, 'base64')
       .toString('utf-8');
     return JSON.parse(decoded);
@@ -99,6 +99,7 @@ export class Player {
    * This decodes the base64 encoding representing the player's skin, cape,
    * or both. It then gets the file from that link and returns it into a Buffer
    * @returns {Promise<Buffer>}
+   * @throws {Error} if there is no custom skin
    */
   public async getSkin(): Promise<Buffer> {
     let profile = await this.getProfile();
@@ -116,9 +117,8 @@ export class Player {
       } else {
         throw new Error('No custom skin');
       }
-
     } else {
-      throw new Error('Missing texture');
+      throw new Error('No custom skin');
     }
   }
 
@@ -148,5 +148,27 @@ export class Player {
         }
       }));
     });
+  }
+
+  /**
+   * Gets the URL of the player's skin
+   * @returns {Promise<string>}
+   * @throws {Error} if there is no custom skin
+   */
+  public async getSkinURL(): Promise<string> {
+    let profile = await this.getProfile();
+
+    if (profile.properties.length >= 1) {
+      let texture = profile.properties[0];
+      let parsed = Player.parseTexture(texture);
+
+      if (parsed.textures.SKIN) {
+        return parsed.textures.SKIN.url;
+      } else {
+        throw new Error('No custom skin');
+      }
+    } else {
+      throw new Error('No custom skin');
+    }
   }
 }
