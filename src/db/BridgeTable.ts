@@ -99,7 +99,7 @@ export class BridgeTable {
     this.db.prepare(
       'CREATE TABLE IF NOT EXISTS bridges (' +
       'id text primary key NOT NULL,' +
-      'room text primary key NOT NULL' +
+      'room text NOT NULL' +
       ')'
     ).run();
   }
