@@ -10,13 +10,15 @@ import { v4 as uuid } from "uuid";
  * right registration file to interact with a Matrix server.
  */
 export class RegManager {
-  public static readonly regPath = "./appservice.yaml";
+  public readonly regPath: string;
 
-  constructor(public readonly config: Config) { }
+  constructor(public readonly config: Config) {
+    this.regPath = config.appservice.regPath;
+  }
 
   public getRegistration(): IAppserviceRegistration {
-    if (fs.existsSync(RegManager.regPath)) {
-      const regBuff = fs.readFileSync(RegManager.regPath);
+    if (fs.existsSync(this.regPath)) {
+      const regBuff = fs.readFileSync(this.regPath);
 
       return yaml.parse(regBuff.toString());
     } else {
@@ -48,7 +50,7 @@ export class RegManager {
       rate_limited: false,
       sender_localpart: "_mc_bot"
     };
-    fs.writeFileSync(RegManager.regPath, yaml.stringify(reg));
+    fs.writeFileSync(this.regPath, yaml.stringify(reg));
 
     return reg;
   }

@@ -17,7 +17,7 @@ export class BridgeManager {
   private readonly config: Config;
 
   constructor(config: Config) {
-    this.db = new DBController();
+    this.db = new DBController(config);
     this.config = config;
   }
 
