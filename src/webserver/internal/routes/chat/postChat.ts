@@ -83,6 +83,12 @@ export function checkIntegrity(req: Request, res: Response, next: NextFunction) 
     return;
   }
 
+  LogService.info(
+    'marco:WebServer',
+    `Request ${reqID}\n` +
+    ' - Message: ' + message
+  )
+
   // Check player
   const player = body['player'];
   if (player == undefined) {
@@ -102,6 +108,12 @@ export function checkIntegrity(req: Request, res: Response, next: NextFunction) 
     fail(res, Errors.playerNameTypeError);
     return;
   }
+
+  LogService.info(
+    'marco:WebServer',
+    `Request ${reqID}\n` +
+    ' - Player name: ' + name
+  )
 
   // Check <player>.uuid
   const uuid = player.uuid;
