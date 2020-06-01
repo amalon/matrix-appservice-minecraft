@@ -1,6 +1,6 @@
 {
   "name": "marco",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "description": "A relay bridge between multiple Minecraft servers and corresponding Matrix rooms.",
   "main": "index.js",
   "author": "Dylan Hackworth",
