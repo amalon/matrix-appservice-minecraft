@@ -1,9 +1,10 @@
 import { Player } from "./internal/Player";
 import type { Intent } from "matrix-bot-sdk";
+import { LogService } from "matrix-bot-sdk";
 
 
 type MarcoProfile = {
-  skin64: string;
+  skin: string;
 }
 
 /**
@@ -62,14 +63,15 @@ export class PlayerManager {
       intent.userId
     );
     const playerName = await player.getName();
-    const mcProfile = await player.getProfile();
     const mxName: string | undefined = mxProfile['displayname'];
-    const mxAvatar: string | undefined = mxProfile['avatar_url'];
-    let marcoProfile: MarcoProfile | undefined;
+    let storedSkin;
     try {
-      marcoProfile = await intent.underlyingClient.getAccountData("dev.dhdf.marco");
+      let marcoProfile: MarcoProfile = await intent.underlyingClient.getAccountData(
+        "dev.dhdf.marco"
+      );
+      storedSkin = marcoProfile.skin || '';
     } catch (err) {
-      marcoProfile = undefined;
+      storedSkin = '';
     }
 
 
@@ -83,15 +85,22 @@ export class PlayerManager {
     // This is a base64 encoding representation of the player's texture. It
     // can be a skin, cape, or both. We can use this base64 encoding to see
     // if they've updated their skin.
-    const skinBase64 = mcProfile.properties[0].value;
+    const currentSkin = await player.getSkinURL();
 
-    if (!mxAvatar) {
+    LogService.debug(
+      'marco-PlayerManager',
+      `Player's current skin:\n${currentSkin}\n` +
+      `Player's stored skin:\n${storedSkin}\n` +
+      `Difference? ${storedSkin == currentSkin ? 'no' : 'yes'}`
+    );
+
+    if (storedSkin != currentSkin) {
       // This will get the skin and crop the head out (see getHead method)
       const head = await player.getHead();
       // This will get sent to the Intent's account data so we can use it
       // to see if their base64 encoding has updated in the future
       const marcoProfile: MarcoProfile = {
-        skin64: skinBase64
+        skin: currentSkin
       };
 
       // This represents their new Matrix-content-url (mxc) which can be

@@ -1,4 +1,5 @@
 import * as matrix from "matrix-bot-sdk";
+import { LogService } from "matrix-bot-sdk";
 import { RegManager } from "./internal/RegManager";
 import { Config } from "../common/Config";
 import type { Marco, McMessage, MxMessage } from "../Marco";
@@ -71,18 +72,32 @@ export class MatrixManager {
     const uuid = await mcMessage.player.getUUID();
     // This is the representing Matrix user
     const intent = this.appservice.getIntentForSuffix(uuid);
-    await intent.ensureRegistered();
-    // Keep the player name, skin in sync with their profile data on Matrix
-    await this.marco.players.sync(intent, mcMessage.player);
 
-    // Finally send the message to the room, half of these steps are
-    // skipped to this if everything has already been completed before
-    // (such as inviting, joining, and syncing unless the player updated a
-    // certain detail that we keep synced)
-    await intent.sendText(
-      mcMessage.room,
-      mcMessage.body
-    );
+    try {
+      await intent.ensureRegistered();
+      // Keep the player name, skin in sync with their profile data on Matrix
+      await this.marco.players.sync(intent, mcMessage.player);
+
+      // Finally send the message to the room, half of these steps are
+      // skipped to this if everything has already been completed before
+      // (such as inviting, joining, and syncing unless the player updated a
+      // certain detail that we keep synced)
+    } catch (err) {
+      let errMessage = 'An error occurred while sending a message to a bridged room.\n'
+      if (err instanceof Error) {
+        errMessage += ` - message: ${err.message}\n`;
+        errMessage += ` - stack:\n${err.stack}`;
+      } else {
+        errMessage += ' - error: ' + err;
+      }
+      LogService.error('marco-matrix', errMessage);
+    } finally {
+      // what matters most is that the message gets to the room.
+      await intent.sendText(
+        mcMessage.room,
+        mcMessage.body
+      );
+    }
   }
 
   /**
