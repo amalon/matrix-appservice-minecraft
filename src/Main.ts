@@ -53,8 +53,9 @@ export class Main {
    * This starts up the webserver and matrix appservice.
    */
   public async start() {
-    await this.webserver.start();
     await this.matrix.start();
+    const router = this.matrix.appservice.expressAppInstance;
+    this.webserver.start(router);
   }
 
   /**
