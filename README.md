@@ -12,14 +12,24 @@ and [Minecraft](https://www.minecraft.net/)
    - [x] Retrieve matrix messages
       - [x] m.emotes
       - [x] m.text
+      - [ ] m.notice
    - [ ] Send messages
       - [ ] Player events (ie deaths, kicks, advancements, etc.)
+         - [ ] Joins/Leaves/kicks
+         - [ ] Deaths
+            - [ ] Easy (hit the ground too hard, etc)
+            - [ ] Hard (<player> was slain by <player/mob> using <item>, <player> walked into fire whilst fighting <player/mob>, etc.)
+         - [ ] Advancements
       - [x] Player chat messages / emotes
+      - [ ] Arbitrary command execution from matrix
  - [x] Matrix
    - [x] In-sync Profiles
       - [x] Player's skin as matrix avatar
+         - [ ] [3D Head Render](https://crafatar.com/)
       - [x] Player's name as matrix display name
+      - [ ] Presence Status
    - [x] Bridge / Unbridge with commands
+   - [ ] [Counters](https://github.com/vector-im/riot-web/blob/develop/docs/labs.md#render-simple-counters-in-room-header-feature_state_counters)
 
 
 ## Description
