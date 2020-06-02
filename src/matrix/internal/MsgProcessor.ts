@@ -1,19 +1,15 @@
-import { MxMessage } from "../../Marco";
-import { MatrixManager } from "../MatrixManager";
+import { MatrixInterface, MxMessage } from "../MatrixInterface";
 
 export class MsgProcessor {
-  constructor(private readonly matrix: MatrixManager) {}
+  constructor(private readonly matrix: MatrixInterface) {}
 
   /**
    * This intakes an m.emote message type and builds to be ready to be sent
-   * to a Minecraft chat.
+   * to a Minecraft chat. ie. "waves" -> " * <Dylan> waves"
    *
-   * Visual Representation (TL;DR):
-   * (Matrix Message "waves") -> buildEmoteMsg
-   * buildEmoteMsg -> (Minecraft message " * <Dylan> waves")
    * @param {string} room Corresponding room
    * @param {any} event m.room.message with typeof "m.emote"
-   * @returns {Promise<MxMessage>}
+   * @returns {Promise<string>}
    */
   public async buildEmoteMsg(room: string, event: any): Promise<MxMessage> {
     const content = event['content'];
@@ -23,21 +19,19 @@ export class MsgProcessor {
     const name: string = roomMember['displayname'] || sender;
 
     return {
-      body: ` * <${name}> ${body}`,
       sender,
       room,
-    }
+      body: ` * <${name}> ${body}`,
+    };
   }
 
   /**
    * This intakes an m.text message type and builds to be ready to be sent
-   * to a Minecraft chat.
+   * to a Minecraft chat. ie. "Hello world" -> "<Dylan> Hello world"
    *
-   * Visual Representation (TL;DR):
-   * (Matrix Message "Hello world") -> buildTextMsg
-   * buildTextMsg -> (Minecraft Message "<Dylan> Hello world")
    * @param room
    * @param event
+   * @returns {Promise<string>}
    */
   public async buildTextMsg(room: string, event: any): Promise<MxMessage> {
     const content = event['content'];
@@ -47,9 +41,9 @@ export class MsgProcessor {
     const name: string = roomMember['displayname'] || sender;
 
     return {
-      body: `<${name}> ${body}`,
       sender,
-      room
-    }
+      room,
+      body: `<${name}> ${body}`,
+    };
   }
 }

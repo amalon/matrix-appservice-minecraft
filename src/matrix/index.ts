@@ -1,1 +1,1 @@
-export { MatrixManager } from "./MatrixManager";
+export { MatrixInterface } from "./MatrixInterface";

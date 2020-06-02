@@ -76,6 +76,9 @@ export class Config {
   public static genConfig(location?: string): Config {
     const conf = new Config();
 
+    if (!fs.existsSync(Config.configRoot))
+      mkdirp.sync(Config.configRoot);
+
     fs.writeFileSync(location || Config.defaultPath, yaml.stringify(conf));
 
     return conf;

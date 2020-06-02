@@ -1,8 +1,11 @@
 /**
  * This class holds the details about an established bridge.
- * @property {string} id The current identifier is a JWT.
- *  <jwt>.room: string = room bridged
- *  <jwt>.uuid: string = token identifier
+ * @property {string} id The current identifier is a JWT. Here is the body
+ * of the token:
+ * {
+ *   "room": "Room ID",
+ *   "uuid": "Token's identifier"
+ * }
  * @property {string} room The room bridged
  */
 export class Bridge {

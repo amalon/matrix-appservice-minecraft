@@ -1,12 +1,19 @@
 import * as matrix from "matrix-bot-sdk";
 import { LogService } from "matrix-bot-sdk";
 import { RegManager } from "./internal/RegManager";
-import { Config } from "../common/Config";
-import type { Marco, McMessage, MxMessage } from "../Marco";
-import { Bridge } from "../common/Bridge";
+import { Config } from "../Config";
+import type { Main } from "../Main";
+import { Bridge } from "../bridging";
 import { CmdManager } from "./internal/CmdManager";
 import { MsgProcessor } from "./internal/MsgProcessor";
+import type { MCEvents } from "../minecraft";
 
+
+export type MxMessage = {
+  sender: string;
+  room: string;
+  body: string;
+}
 
 /**
  * The MatrixManager class has everything to do with Matrix's appservice
@@ -16,23 +23,22 @@ import { MsgProcessor } from "./internal/MsgProcessor";
  * It also stores new room messages in the newMxMessages for the Minecraft
  * server to retrieve periodically.
  */
-export class MatrixManager {
+export class MatrixInterface {
   // Interfaces with Matrix
   private readonly appservice: matrix.Appservice;
-  private readonly marco: Marco;
+  private readonly main: Main;
   // Collects new messages for Minecraft servers
-  private readonly newMxMessages: Map<string, MxMessage[]>
+  private readonly newMxMessages: Map<string, string[]>
   // Handles commands given by Matrix users
   private readonly cmdManager: CmdManager;
   // Converts matrix messages into McMessages
   private readonly msgProcessor: MsgProcessor;
 
 
-  constructor(config: Config, marco: Marco) {
-    const regManager = new RegManager(config);
-    const registration = regManager.getRegistration();
+  constructor(config: Config, marco: Main) {
+    let registration = RegManager.getRegistration(config);
 
-    this.marco = marco;
+    this.main = marco;
     this.msgProcessor = new MsgProcessor(this);
     this.appservice = new matrix.Appservice({
       registration,
@@ -41,7 +47,7 @@ export class MatrixManager {
       homeserverUrl: config.appservice.homeserverURL,
       port: config.appservice.port
     });
-    this.cmdManager = new CmdManager(this.appservice, this.marco);
+    this.cmdManager = new CmdManager(this.appservice, this.main);
     this.newMxMessages = new Map();
   }
 
@@ -59,15 +65,13 @@ export class MatrixManager {
   }
 
   /**
-   * This intakes a McMessage and relays it the corresponding room
-   * (provided in the McMessage properties). Before it relays it to the
-   * corresponding room it must make sure that the player name and skin are
-   * synced with the Matrix appservice user to get the full experience of
-   * talking to a Minecraft player through Matrix.
-   * @param {McMessage} mcMessage
+   * This intakes a Minecraft chat message and relays it the provided bridged
+   * room.
+   * @param {Bridge} bridge
+   * @param {MCEvents.Message} mcMessage
    * @returns {Promise<void>}
    */
-  public async sendMessage(mcMessage: McMessage): Promise<void> {
+  public async sendMessage(bridge: Bridge, mcMessage: MCEvents.Message): Promise<void> {
     // The player UUID is the Matrix appservice user's Matrix ID
     const uuid = await mcMessage.player.getUUID();
     // This is the representing Matrix user
@@ -76,7 +80,7 @@ export class MatrixManager {
     try {
       await intent.ensureRegistered();
       // Keep the player name, skin in sync with their profile data on Matrix
-      await this.marco.players.sync(intent, mcMessage.player);
+      await this.main.players.sync(intent, mcMessage.player);
 
       // Finally send the message to the room, half of these steps are
       // skipped to this if everything has already been completed before
@@ -94,25 +98,19 @@ export class MatrixManager {
     } finally {
       // what matters most is that the message gets to the room.
       await intent.sendText(
-        mcMessage.room,
+        bridge.room,
         mcMessage.message
       );
     }
   }
 
   /**
-   * This gives the Minecraft server all the new messages since last
-   * retrieved. The Minecraft server will periodically make GET requests to
-   * see if there are any new messages in the room (which is done here)
-   *
-   * Visual Representation (TL;DR):
-   * Minecraft (GET /chat) -> Marco
-   * Minecraft (GET /chat) <- Marco (Response: MxMessage[])
-   *
+   * This returns all the new room messages of a given bridge since the
+   * last time requested.
    * @param {Bridge} bridge
-   * @returns {MxMessage[]}
+   * @returns {string[]}
    */
-  public getNewMxMessages(bridge: Bridge): MxMessage[] {
+  public getNewMxMessages(bridge: Bridge): string[] {
     let newMxMessages = this.newMxMessages.get(bridge.room);
 
     if (!newMxMessages) {
@@ -124,18 +122,14 @@ export class MatrixManager {
   }
 
   /**
-   * This adds all new messages seen in the corresponding Matrix room. This
-   * means that this appservice DOES NOT respect m.room.redaction events,
-   * since there is no way of redacting the corresponding message on
-   * Minecraft or even guaranteeing that the message gets taken out of the
-   * list before the Minecraft server checks in. Sorry won't fix :(
+   * This stores all the new Matrix room messages
    * @param {MxMessage} message
    */
   public addNewMxMessage(message: MxMessage) {
     const newMxMessages = this.newMxMessages.get(message.room) || [];
 
     if (!this.appservice.isNamespacedUser(message.sender))
-      newMxMessages.push(message);
+      newMxMessages.push(message.body);
 
     this.newMxMessages.set(message.room, newMxMessages);
   }
@@ -143,20 +137,22 @@ export class MatrixManager {
   /**
    * This gets the m.room.member state event of a provided Matrix ID and room
    * @param {string} room The room to retrieve the profile data from
-   * @param {string} mxid The user being retrieved
+   * @param {string} user The user being retrieved
+   * @returns {Promise<any>}
    */
-  public async getRoomMember(room: string, mxid: string) {
+  public async getRoomMember(room: string, user: string): Promise<any> {
     return this.appservice.botClient.getRoomStateEvent(
       room,
       'm.room.member',
-      mxid
+      user
     );
   }
 
   /**
-   * This intakes m.room.message events, checks if the room that the event
-   * appeared in is bridged and then deals with the type of message that it
-   * is. Currently the only two message types are supported: m.emote, m.text.
+   * This intakes m.room.message events. It first sees if it's a !minecraft
+   * command if it is then it gives it to CmdManager.onMxMessage, otherwise
+   * it checks if the message is coming from a bridged room if it is then
+   * it process the message and sends it to Main.sendToMinecraft.
    * @param {string} room Room Matrix ID
    * @param {any} event m.room.message event
    */
@@ -167,7 +163,7 @@ export class MatrixManager {
       return;
     const body = content['body'];
     const msgtype: string = content['msgtype'];
-    const isBridged = this.marco.bridges.isRoomBridged(room);
+    const isBridged = this.main.bridges.isRoomBridged(room);
 
     // Handle commands first
     if (msgtype == 'm.text' && body.startsWith(CmdManager.prefix)) {
@@ -182,17 +178,17 @@ export class MatrixManager {
 
     // Handle m.text message
     if (msgtype == 'm.text') {
-      let mxMessage = await this.msgProcessor.buildTextMsg(room, event);
+      let message = await this.msgProcessor.buildTextMsg(room, event);
 
-      // Give it to Marco to handle
-      this.marco.onMxChat(mxMessage);
+      // Give it to Main to handle
+      this.main.sendToMinecraft(message);
 
       // Handle m.emote message
     } else if (msgtype == 'm.emote') {
-      let mxMessage = await this.msgProcessor.buildEmoteMsg(room, event);
+      let message = await this.msgProcessor.buildEmoteMsg(room, event);
 
-      // Give it to Marco to handle
-      this.marco.onMxChat(mxMessage);
+      // Give it to Main to handle
+      this.main.sendToMinecraft(message);
     }
   }
 }

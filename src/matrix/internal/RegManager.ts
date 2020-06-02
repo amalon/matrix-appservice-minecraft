@@ -1,8 +1,9 @@
-import type { Config } from "../../common/Config";
+import { Config } from "../../Config";
 import type { IAppserviceRegistration } from "matrix-bot-sdk";
 import fs from "fs";
 import * as yaml from "yaml";
 import { v4 as uuid } from "uuid";
+import mkdirp from "mkdirp";
 
 
 /**
@@ -10,19 +11,20 @@ import { v4 as uuid } from "uuid";
  * right registration file to interact with a Matrix server.
  */
 export class RegManager {
-  public readonly regPath: string;
+  private static readonly regRoot = Config.configRoot;
+  private static readonly defaultPath = RegManager.regRoot + '/appservice.yaml'
 
-  constructor(public readonly config: Config) {
-    this.regPath = config.appservice.regPath;
-  }
+  constructor() {}
 
-  public getRegistration(): IAppserviceRegistration {
-    if (fs.existsSync(this.regPath)) {
-      const regBuff = fs.readFileSync(this.regPath);
+  public static getRegistration(config: Config): IAppserviceRegistration {
+    const location = config.appservice.regPath;
+
+    if (fs.existsSync(config.appservice.regPath)) {
+      const regBuff = fs.readFileSync(location);
 
       return yaml.parse(regBuff.toString());
     } else {
-      return this.genRegistration();
+      return RegManager.genRegistration();
     }
   }
 
@@ -32,12 +34,12 @@ export class RegManager {
    * @link https://matrix.org/docs/spec/application_service/r0.1.2#registration
    * @returns {IAppserviceRegistration}
    */
-  public genRegistration(): IAppserviceRegistration {
+  public static genRegistration(): IAppserviceRegistration {
     const reg: IAppserviceRegistration = {
       as_token: uuid(),
       hs_token: uuid(),
       id: uuid(),
-      url: `http://localhost:${this.config.appservice.port}`,
+      url: `http://localhost:3051`,
       namespaces: {
         aliases: [],
         rooms: [],
@@ -50,7 +52,10 @@ export class RegManager {
       rate_limited: false,
       sender_localpart: "_mc_bot"
     };
-    fs.writeFileSync(this.regPath, yaml.stringify(reg));
+    if (!fs.existsSync(RegManager.regRoot))
+      mkdirp.sync(RegManager.defaultPath);
+
+    fs.writeFileSync(RegManager.defaultPath, yaml.stringify(reg));
 
     return reg;
   }

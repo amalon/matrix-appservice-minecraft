@@ -4,23 +4,23 @@ import express, {
   Request,
   Response
 } from "express";
-import type { Config } from "../common/Config";
-import type { Marco } from "../Marco";
-import { NotBridgedError } from "../common/errors";
+import type { Config } from "../Config";
+import type { Main } from "../Main";
+import { BridgeError } from "../bridging";
 import { chatRouter } from "./internal/routes";
 import { LogService } from "matrix-bot-sdk";
 import { v1 as uuid } from "uuid";
 import * as Errors from "./internal/errors";
 
 
-export class WebServer {
+export class WebInterface {
   private readonly app: Application;
-  private readonly marco: Marco
+  private readonly main: Main
   private readonly config: Config;
 
-  public constructor(config: Config, marco: Marco) {
+  public constructor(config: Config, main: Main) {
     this.app = express();
-    this.marco = marco;
+    this.main = main;
     this.config = config;
   }
 
@@ -46,7 +46,14 @@ export class WebServer {
     });
   }
 
-  private vibeCheck(req: Request, res: Response): void {
+  /**
+   * This intakes an HTTP request that has a bearer token. In that token
+   * should determine whether or not it's bridged with a room. If it is
+   * then we're vibing, otherwise not so much.
+   * @param {Request} req The request object being read from
+   * @param {Response} res The response object being sent to the requester
+   */
+  private vibeCheck(req: Request, res: Response) {
     const auth = req.header('Authorization');
     const id = uuid();
 
@@ -81,7 +88,7 @@ export class WebServer {
         `Vibe Request ${id}\n` +
         ` - token: ${token}`
       );
-      const bridge = this.marco.bridges.getBridge(token);
+      const bridge = this.main.bridges.getBridge(token);
 
       LogService.info(
         "marco:WebServer",
@@ -97,7 +104,7 @@ export class WebServer {
       res.end();
 
     } catch (err) {
-      if (err instanceof NotBridgedError) {
+      if (err instanceof BridgeError.NotBridgedError) {
         LogService.warn(
           "marco:WebServer",
           `Vibe Request ${id}\n` +
@@ -125,9 +132,9 @@ export class WebServer {
 
   /**
    * Every request needs to be authorized
-   * @param {Request} req
-   * @param {Response} res
-   * @param {NextFunction} next
+   * @param {Request} req The request object being read from
+   * @param {Response} res The response object being sent to the requester
+   * @param {NextFunction} next This is called if the checkAuth passes
    */
   private checkAuth(req: Request, res: Response, next: NextFunction) {
     // This represents the identifier for the request being made (for
@@ -166,7 +173,7 @@ export class WebServer {
       // The BrideManager associates tokens with rooms and if this is a
       // valid token it will result in a Bridge type otherwise it will
       // throw a NotBridgedError
-      const bridge = this.marco.bridges.getBridge(token);
+      const bridge = this.main.bridges.getBridge(token);
 
       LogService.info(
         "marco:WebServer",
@@ -175,7 +182,7 @@ export class WebServer {
       );
 
       // @ts-ignore
-      req['marco'] = this.marco;
+      req['main'] = this.main;
       // @ts-ignore
       req['bridge'] = bridge;
       // @ts-ignore
@@ -183,9 +190,13 @@ export class WebServer {
 
       next();
     } catch (err) {
-      if (err instanceof NotBridgedError) {
+      if (err instanceof BridgeError.NotBridgedError) {
         res.status(401);
         res.send(Errors.invalidTokenError);
+        res.end();
+      } else {
+        res.status(500);
+        res.send(Errors.serverError);
         res.end();
       }
     }
