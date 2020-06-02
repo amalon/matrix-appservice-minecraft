@@ -92,7 +92,18 @@ export class Player {
     const uuid = await this.getUUID();
     const target = Endpoints.get.profile.replace(/({uuid})/g, uuid);
 
-    return getJSON(target);
+    try {
+      return await getJSON(target);
+    } catch (err) {
+      return {
+        'id': uuid,
+        'name': await this.getName(),
+        'properties':  [ {
+          "name" : "textures",
+          "value" : "ewogICJ0aW1lc3RhbXAiIDogMTU5MDg3ODkzNDQ3MCwKICAicHJvZmlsZUlkIiA6ICIzNzljNGIzMTNiNTg0NDcyODZjYjI0NjBiYjM4MzJmNiIsCiAgInByb2ZpbGVOYW1lIiA6ICJqYW1hbG9uIiwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlLzFhNGFmNzE4NDU1ZDRhYWI1MjhlN2E2MWY4NmZhMjVlNmEzNjlkMTc2OGRjYjEzZjdkZjMxOWE3MTNlYjgxMGIiCiAgICB9CiAgfQp9"
+        } ]
+      };
+    }
   }
 
   /**
