@@ -19,6 +19,7 @@ export class WebInterface {
 
   /**
    * This starts the webserver
+   * @param {Router} app Router to extend off of
    */
   public start(app: Router) {
     // Vibe check for checking client to server integrity, if it passes the

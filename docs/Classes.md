@@ -101,6 +101,9 @@ To see how each endpoint is processed then see the
 [routes directory](../src/webserver/internal/routes)
 
 #### start(): void
+| Parameter | Type   | Description             |
+|-----------|--------|-------------------------|
+| app       | Router | Router to extend off of |
 This gets the WebInterface ready for use, this must be called before
 anything can happen.
 
