@@ -25,7 +25,7 @@ export type MxMessage = {
  */
 export class MatrixInterface {
   // Interfaces with Matrix
-  private readonly appservice: matrix.Appservice;
+  public readonly appservice: matrix.Appservice;
   private readonly main: Main;
   // Collects new messages for Minecraft servers
   private readonly newMxMessages: Map<string, string[]>

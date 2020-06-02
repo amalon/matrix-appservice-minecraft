@@ -14,7 +14,6 @@ export type AppserviceConfig = {
 }
 
 export type WebserverConfig = {
-  port: number;
   privKey: string;
 }
 
@@ -39,7 +38,6 @@ export class Config {
       regPath: Config.configRoot + '/appservice.yaml'
     };
     this.webserver = {
-      port: 3052,
       privKey: uuid(),
     };
     this.database = {

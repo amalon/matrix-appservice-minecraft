@@ -1,9 +1,4 @@
-import express, {
-  Application,
-  NextFunction,
-  Request,
-  Response
-} from "express";
+import type { NextFunction, Request, Response, Router } from "express";
 import type { Config } from "../Config";
 import type { Main } from "../Main";
 import { BridgeError } from "../bridging";
@@ -14,12 +9,10 @@ import * as Errors from "./internal/errors";
 
 
 export class WebInterface {
-  private readonly app: Application;
   private readonly main: Main
   private readonly config: Config;
 
   public constructor(config: Config, main: Main) {
-    this.app = express();
     this.main = main;
     this.config = config;
   }
@@ -27,23 +20,16 @@ export class WebInterface {
   /**
    * This starts the webserver
    */
-  public start() {
+  public start(app: Router) {
     // Vibe check for checking client to server integrity, if it passes the
     // checkAuth method then everything is good
-    this.app.get('/vibecheck', this.vibeCheck.bind(this));
+    app.get('/vibecheck', this.vibeCheck.bind(this));
 
-    // All the endpoints require authorization
-    this.app.use('/', (req, res, next) => this.checkAuth(req, res, next));
+    // Check all authorization headers at these endpoints
+    app.use('/chat', this.checkAuth.bind(this));
 
     // Chat endpoint for getting messages and posting minecraft chat messages
-    this.app.use('/chat', chatRouter);
-
-    this.app.listen(this.config.webserver.port, () => {
-      LogService.info(
-        'webserver',
-        `Listening on port ${this.config.webserver.port}`
-      );
-    });
+    app.use('/chat', chatRouter);
   }
 
   /**
