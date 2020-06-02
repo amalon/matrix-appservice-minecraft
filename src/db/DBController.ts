@@ -1,16 +1,18 @@
 import connection, { Database } from 'better-sqlite3';
-import { BridgeTable } from "./BridgeTable";
-import { Config } from "../common/Config";
+import { BridgeTable } from "./tables/BridgeTable";
+import type { Config } from "../Config";
 
 
+/**
+ * This is the database controller
+ * @prop {BridgeTable} bridges This interfaces with the "bridges" table.
+ */
 export class DBController {
-  private readonly dbPath: string;
   public readonly bridges: BridgeTable;
   private readonly db: Database
 
   constructor(config: Config) {
-    this.dbPath = config.database.location;
-    this.db = connection(this.dbPath);
+    this.db = connection(config.database.location);
     this.bridges = new BridgeTable(this.db);
   }
 }

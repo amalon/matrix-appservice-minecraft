@@ -1,5 +1,4 @@
-import { Bridge } from "../common/Bridge";
-import { NotBridgedError } from "../common/errors";
+import { Bridge, BridgeError } from "../../bridging/";
 import { Database } from "better-sqlite3";
 import { LogService } from "matrix-bot-sdk";
 
@@ -23,7 +22,7 @@ export class BridgeTable {
    */
   public setBridge(id: string, room: string): boolean {
     const info = this.db.prepare(
-      'INSERT INTO bridges (id, room) VALUES (?,?)'
+      'INSERT INTO bridging (id, room) VALUES (?,?)'
     ).run(id, room);
 
     return (info.changes > 0);
@@ -38,14 +37,14 @@ export class BridgeTable {
    */
   public getBridge(id: string): Bridge {
     const row = this.db.prepare(
-      'SELECT room FROM bridges WHERE id=?'
+      'SELECT room FROM bridging WHERE id=?'
     ).get(id);
     const roomID: string | undefined = row?.room;
 
     if (roomID) {
       return new Bridge(id, roomID);
     } else {
-      throw new NotBridgedError();
+      throw new BridgeError.NotBridgedError();
     }
   }
 
@@ -56,7 +55,7 @@ export class BridgeTable {
    */
   public unBridge(id: string): boolean {
     const info = this.db.prepare(
-      'DELETE FROM bridges WHERE id=?'
+      'DELETE FROM bridging WHERE id=?'
     ).run(id);
 
     return (info.changes > 0);
@@ -69,7 +68,7 @@ export class BridgeTable {
    */
   public isRoomBridged(room: string): boolean {
     const row = this.db.prepare(
-      'SELECT id FROM bridges WHERE room=?'
+      'SELECT id FROM bridging WHERE room=?'
     ).get(room);
 
     return (row != undefined);
@@ -82,7 +81,7 @@ export class BridgeTable {
    */
   public isBridged(id: string): boolean {
     const row = this.db.prepare(
-      'SELECT id FROM bridges WHERE id=?'
+      'SELECT id FROM bridging WHERE id=?'
     ).get(id);
 
     return (row != undefined);
@@ -93,11 +92,11 @@ export class BridgeTable {
    */
   private setupBridgeTable() {
     LogService.info(
-      'marco-db: bridges',
+      'marco-db: bridging',
       'Setting up bridge table'
     );
     this.db.prepare(
-      'CREATE TABLE IF NOT EXISTS bridges (' +
+      'CREATE TABLE IF NOT EXISTS bridging (' +
       'id text primary key NOT NULL,' +
       'room text NOT NULL' +
       ')'

@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import type { Marco } from "../../../../Marco";
-import type { Bridge } from "../../../../common/Bridge";
+import type { Main } from "../../../../Main";
+import type { Bridge } from "../../../../bridging";
 import { LogService } from "matrix-bot-sdk";
 
 
@@ -12,12 +12,12 @@ import { LogService } from "matrix-bot-sdk";
  */
 export function getChat(req: Request, res: Response) {
   // @ts-ignore
-  const marco: Marco = req['marco'];
+  const main: Main = req['main'];
   // @ts-ignore
   const bridge: Bridge = req['bridge'];
   // @ts-ignore
   const id = req['id'];
-  const messages = marco.matrix.getNewMxMessages(bridge);
+  const messages = main.getNewMxMessages(bridge);
   const chat = {
     chat: messages
   };

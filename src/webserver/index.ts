@@ -1,1 +1,1 @@
-export { WebServer } from "./WebServer";
+export { WebInterface } from "./WebInterface";

@@ -2,13 +2,12 @@ import { Bridge } from "./Bridge";
 import { BridgedAlreadyError, NotBridgedError } from "./errors";
 import * as jose from 'jose';
 import { v1 as uuid } from 'uuid';
-import { Config } from "./Config";
-import { DBController } from "../db/DBController";
-import { BridgeTable } from "../db/BridgeTable";
+import { Config } from "../Config";
+import { BridgeTable, DBController } from "../db";
 
 
 /**
- * The BridgeManager validates bridges between a Minecraft server and
+ * The BridgeManager validates bridging between a Minecraft server and
  * corresponding Matrix room. It's important to communicate with the
  * BridgeManager before interacting with a room or Minecraft server to make
  * sure the interactions are valid.

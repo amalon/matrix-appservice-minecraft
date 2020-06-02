@@ -1,8 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import * as Errors from "../../errors";
-import { Marco, McMessage } from "../../../../Marco";
-import { Bridge } from "../../../../common/Bridge";
+import { Main } from "../../../../Main";
+import { Bridge } from "../../../../bridging";
 import { LogService } from "matrix-bot-sdk";
+import { MCEvents } from "../../../../minecraft";
 
 
 /**
@@ -23,7 +24,7 @@ import { LogService } from "matrix-bot-sdk";
  */
 export async function postChat(req: Request, res: Response): Promise<void> {
   // @ts-ignore
-  const marco: Marco = req['marco'];
+  const main: Main = req['main'];
   // @ts-ignore
   const bridge: Bridge = req['bridge'];
   // @ts-ignore
@@ -31,15 +32,13 @@ export async function postChat(req: Request, res: Response): Promise<void> {
   const body = req.body;
   const message: string = body['message'];
   const playerRaw: { name: string, uuid: string } = body.player;
-  const player = await marco.players.getPlayer(playerRaw.name, playerRaw.uuid);
-  const mcMessage: McMessage = {
-    room: bridge.room,
+  const player = await main.players.getPlayer(playerRaw.name, playerRaw.uuid);
+  const mcMessage: MCEvents.Message = {
     message,
     player
   }
 
-
-  await marco.onMcChat(mcMessage);
+  await main.sendToMatrix(bridge, mcMessage);
   res.status(200);
   res.end();
   LogService.info(

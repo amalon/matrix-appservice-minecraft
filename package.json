@@ -1,6 +1,6 @@
 {
-  "name": "marco",
-  "version": "0.9.3",
+  "name": "matrix-appservice-minecraft",
+  "version": "0.9.4",
   "description": "A relay bridge between multiple Minecraft servers and corresponding Matrix rooms.",
   "main": "index.js",
   "author": "Dylan Hackworth",
@@ -36,6 +36,7 @@
   "scripts": {
     "test": "jest",
     "build": "tsc",
+    "setup": "npm run build && node dist/src/app.js --INIT",
     "start": "npm run build && node dist/src/app.js"
   }
 }

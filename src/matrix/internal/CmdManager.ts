@@ -1,27 +1,29 @@
 import { Appservice, MatrixClient } from "matrix-bot-sdk";
-import { Marco } from "../../Marco";
-import { BridgedAlreadyError } from "../../common/errors";
+import { Main } from "../../Main";
+import { BridgeError } from "../../bridging";
 
 
 /**
  * This class handles all the commands on the Matrix side a user can use
- * "!marco" to interact with the bot and establish a bridge.
+ * "!minecraft" to interact with the bot and establish a bridge.
  */
 export class CmdManager {
-  public static readonly prefix = "!marco";
+  public static readonly prefix = "!minecraft";
   private static readonly help =
     "Command List:\n" +
+    // see <CmdBridge>.handleBridge method
     " - bridge <room ID>: This will provide an access token to give a" +
     " Minecraft server to send and retrieve messages in the room with.\n" +
+    // see <CmdBridge>.handleUnbridge method
     " - unbridge <room ID>: This will forcefully invalidate any tokens" +
     " corresponding with this room"
   private readonly appservice: Appservice;
-  private readonly marco: Marco;
+  private readonly main: Main;
 
 
-  constructor(appservice: Appservice, marco: Marco) {
+  constructor(appservice: Appservice, main: Main) {
     this.appservice = appservice;
-    this.marco = marco;
+    this.main = main;
   }
 
   /**
@@ -53,10 +55,39 @@ export class CmdManager {
     return hasPerms;
   }
 
-  private static async bridgeErrorHandler(client: MatrixClient,
-                                          room: string,
-                                          err: any): Promise<void> {
-    if (err instanceof BridgedAlreadyError) {
+  /**
+   * This handles m.room.message events that involve commands
+   * @param {string} room Room ID
+   * @param {string} sender
+   * @param {string} body Text-body of the command
+   * @returns {Promise<void>}
+   */
+  public async onMxMessage(room: string, sender: string, body: string) {
+    // args = ["!minecraft", "bridge" || "unbridge" || undefined]
+    const args = body.split(' ');
+    const client = this.appservice.botClient;
+
+    switch (args[1]) {
+      case 'bridge':
+        await this.handleBridge(room, sender, args);
+        break;
+      case 'unbridge':
+        await this.handleUnbridge(room, sender, args);
+        break;
+      default:
+        await client.sendText(room, CmdManager.help);
+    }
+  }
+
+  /**
+   * This handles bridging errors
+   * @param {string} room Room to talk in
+   * @param {any} err Error to talk about
+   */
+  private async bridgeError(room: string, err: any) {
+    const client = this.appservice.botClient;
+
+    if (err instanceof BridgeError.BridgedAlreadyError) {
       await client.sendText(
         room,
         "This room is already bridged to a server.",
@@ -82,41 +113,13 @@ export class CmdManager {
   }
 
   /**
-   * This handles m.room.message events that involve commands
-   * @param {string} room Room ID
-   * @param {string} sender
-   * @param {string} body Text-body of the command
-   * @returns {Promise<void>}
-   */
-  public async onMxMessage(room: string,
-                           sender: string,
-                           body: string): Promise<void> {
-    // args = ["!marco", "bridge" || "unbridge" || undefined]
-    const args = body.split(' ');
-    const client = this.appservice.botClient;
-
-    switch (args[1]) {
-      case 'bridge':
-        await this.handleBridge(room, sender, args);
-        break;
-      case 'unbridge':
-        await this.handleUnbridge(room, sender, args);
-        break;
-      default:
-        await client.sendText(room, CmdManager.help);
-    }
-  }
-
-  /**
    * Establishes a new bridge
    * @param {string} room
    * @param {string} sender
-   * @param {string[]} args ["!marco", "bridge", "<room id>" || undefined]
+   * @param {string[]} args ["!minecraft", "bridge", "<room id>" || undefined]
    * @returns {Promise<void>}
    */
-  private async handleBridge(room: string,
-                             sender: string,
-                             args: string[]): Promise<void> {
+  private async handleBridge(room: string, sender: string, args: string[]) {
     const client = this.appservice.botClient;
 
     try {
@@ -130,28 +133,27 @@ export class CmdManager {
       // See if the user has state_default perms
       const hasPerms = await CmdManager.checkPrivilege(client, room, sender);
       if (hasPerms) {
-        const bridge = this.marco.bridges.bridge(target);
+        const bridge = this.main.bridges.bridge(target);
         await client.sendText(
           room,
-          'Bridged! Go-to the Minecraft server and execute "/bridge <token>"' +
-          `\n${bridge.id}`
+          'Bridged! Go-to the Minecraft server and execute' +
+          `"/bridge <token>"\n${bridge.id}`
         );
       }
     } catch (err) {
-      await CmdManager.bridgeErrorHandler(client, room, err);
+      await this.bridgeError(room, err);
     }
   }
 
   /**
-   * Establishes a new bridge
+   * Remove a bridge
    * @param {string} room
    * @param {string} sender
-   * @param {string[]} args ["!marco", "unbridge", "<room id>" || undefined]
+   * @param {string[]} args
+   * ["!minecraft", "unbridge", "<room id>" || undefined]
    * @returns {Promise<void>}
    */
-  private async handleUnbridge(room: string,
-                               sender: string,
-                               args: string[]): Promise<void> {
+  private async handleUnbridge(room: string, sender: string, args: string[]) {
     const client = this.appservice.botClient;
 
     try {
@@ -167,7 +169,7 @@ export class CmdManager {
       const hasPerms = await CmdManager.checkPrivilege(client, room, sender);
 
       if (hasPerms) {
-        const unbridged = this.marco.bridges.unbridge(target);
+        const unbridged = this.main.bridges.unbridge(target);
 
         if (unbridged)
           await client.sendText(room, "Room has been unbridged.");
@@ -175,7 +177,7 @@ export class CmdManager {
           await client.sendText(room, "The room was never bridged.");
       }
     } catch (err) {
-      await CmdManager.bridgeErrorHandler(client, room, err);
+      await this.bridgeError(room, err);
     }
   }
 }

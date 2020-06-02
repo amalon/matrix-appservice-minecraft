@@ -4,6 +4,26 @@
  * @link https://wiki.vg
  */
 
+import type { Player } from "./Player";
+
+
+export module MCEvents {
+  export type Event = {
+    player: Player;
+  }
+
+  /**
+   * This represents a message coming from a player on Minecraft.
+   * @type Message
+   * @prop {Player} player The player that sent the message
+   * @prop {string} body The body of the message
+   */
+  export interface Message extends Event {
+    message: string;
+  }
+}
+
+
 /**
  * When you request for the Profile + Skin / Cape endpoint there is a
  * base64 encoding in the response, and that base64 resolves to this
@@ -102,8 +122,3 @@ export module Responses {
     properties: Texture[];
   }
 }
-
-
-
-
-

@@ -1,6 +1,5 @@
 /**
- * These are *all* the error responses that Marco gives to Polo upon something
- * messing up.
+ * These are *all* the error responses that the WebInterface provides
  */
 
 /**
@@ -9,7 +8,7 @@
  */
 export const serverError = {
   "error": "SERVER_ERROR",
-  "message": "Marco fricked up"
+  "message": "The server messed up"
 };
 
 /**
