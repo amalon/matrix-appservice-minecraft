@@ -63,7 +63,13 @@ It means a lot
 Join us in our Matrix room
 [#minecraft:dhdf.dev](https://matrix.to/#/!RUdwKvpeiDnWUyWSMJ:dhdf.dev?via=dhdf.dev)
 
-
 ## Compatible Plugins:
  - [Matrix Plugin](https://github.com/dhghf/matrix-plugin)
    - By @dhghf
+
+## Screenshots
+![](./docs/res/mc-screenshot.png)
+
+
+![](./docs/res/mirage-screenshot.png)
+
