@@ -56,7 +56,7 @@ export class WebInterface {
       // Check if they provided an auth token
       if (!auth) {
         res.status(401);
-        res.send({ "status": "BAD", "error": Errors.noTokenError });
+        res.send(Errors.noTokenError);
         res.end();
         return;
       }
@@ -65,7 +65,7 @@ export class WebInterface {
 
       if (!token) {
         res.status(401);
-        res.send({ "status": "BAD", "error": Errors.noTokenError });
+        res.send(Errors.noTokenError);
         res.end();
         return;
       }
@@ -98,7 +98,7 @@ export class WebInterface {
           `Invalid Bridge`
         );
         res.status(401);
-        res.send({ "status": "BAD", "error": Errors.invalidTokenError });
+        res.send(Errors.invalidTokenError);
         res.end();
       } else {
         LogService.error(
@@ -106,7 +106,7 @@ export class WebInterface {
           err
         );
         res.status(500);
-        res.send({ "status": "BAD", "error": Errors.serverError })
+        res.send(Errors.serverError);
       }
     }
 
