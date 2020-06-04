@@ -42,9 +42,8 @@ export async function postChat(req: Request, res: Response): Promise<void> {
   res.status(200);
   res.end();
   LogService.info(
-    'marco-webserver',
-    `Request ${id}`,
-    '- Finished.'
+    'WebInterface',
+    `[Request ${id}]: Finished`
   );
 }
 
@@ -61,10 +60,9 @@ export function checkIntegrity(req: Request, res: Response, next: NextFunction) 
   const body = req.body;
 
   LogService.info(
-    'marco:WebServer',
-    `Request ${reqID}\n` +
-    ' - Checking body integrity'
-  )
+    'WebInterface',
+    `[Request ${reqID}]: Checking Body Integrity`
+  );
 
   // Check if body is defined
   if (body == undefined) {
@@ -82,10 +80,9 @@ export function checkIntegrity(req: Request, res: Response, next: NextFunction) 
     return;
   }
 
-  LogService.info(
-    'marco:WebServer',
-    `Request ${reqID}\n` +
-    ' - Message: ' + message
+  LogService.debug(
+    'WebInterface',
+    `[Request ${reqID}]: Message "${message}"`
   )
 
   // Check player
@@ -108,11 +105,10 @@ export function checkIntegrity(req: Request, res: Response, next: NextFunction) 
     return;
   }
 
-  LogService.info(
-    'marco:WebServer',
-    `Request ${reqID}\n` +
-    ' - Player name: ' + name
-  )
+  LogService.debug(
+    'WebInterface',
+    `[Request ${reqID}]: Player name "${name}"`
+  );
 
   // Check <player>.uuid
   const uuid = player.uuid;
@@ -123,13 +119,14 @@ export function checkIntegrity(req: Request, res: Response, next: NextFunction) 
     return;
   }
 
+  LogService.debug(
+    'WebInterface',
+    `[Request ${reqID}]: Player UUID "${uuid}"`
+  );
+
   LogService.info(
-    'marco:WebServer',
-    `Request ${reqID}\n` +
-    ` - Message: ${message}\n` +
-    ` - Player:\n` +
-    `   - UUID: ${uuid}\n` +
-    `   - Name: ${name}`
+    'WebInterface',
+    `[Request ${reqID}]: Integrity Check Passed`
   );
 
   /**

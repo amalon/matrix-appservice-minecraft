@@ -165,7 +165,7 @@ export class MatrixInterface {
     const msgtype: string = content['msgtype'];
     const isBridged = this.main.bridges.isRoomBridged(room);
 
-    // Handle commands first
+    // Handle command-related messages
     if (msgtype == 'm.text' && body.startsWith(CmdManager.prefix)) {
       await this.cmdManager.onMxMessage(room, event['sender'], content['body']);
       return;

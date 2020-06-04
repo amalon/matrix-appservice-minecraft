@@ -1,4 +1,4 @@
-import { Appservice, MatrixClient } from "matrix-bot-sdk";
+import { Appservice } from "matrix-bot-sdk";
 import { Main } from "../../Main";
 import { BridgeError } from "../../bridging";
 
@@ -16,7 +16,9 @@ export class CmdManager {
     " Minecraft server to send and retrieve messages in the room with.\n" +
     // see <CmdBridge>.handleUnbridge method
     " - unbridge <room ID>: This will forcefully invalidate any tokens" +
-    " corresponding with this room"
+    " corresponding with this room\n" +
+    ' - announce <...announcement>: This will send an announcement as' +
+    ' "Server". Send this command in a bridged room.'
   private readonly appservice: Appservice;
   private readonly main: Main;
 
@@ -27,15 +29,42 @@ export class CmdManager {
   }
 
   /**
+   * This handles m.room.message events that involve commands
+   * @param {string} room Room ID
+   * @param {string} sender
+   * @param {string} body Text-body of the command
+   */
+  public async onMxMessage(room: string, sender: string, body: string) {
+    // args = ["!minecraft", "bridge" || "unbridge" || undefined]
+    const args = body.split(' ');
+    const client = this.appservice.botClient;
+
+    switch (args[1]) {
+      case 'bridge':
+        await this.bridge(room, sender, args);
+        break;
+      case 'unbridge':
+        await this.unbridge(room, sender, args);
+        break;
+      case 'announce':
+        const announcement = body.substr(
+          CmdManager.prefix.length + " announce".length
+        );
+        await this.announce(room, sender, announcement);
+        break;
+      default:
+        await client.sendNotice(room, CmdManager.help);
+    }
+  }
+
+  /**
    * This checks if the user has a power level greater than state_default
-   * @param {MatrixClient} client Client to utilize to check privilege
    * @param {string} room Room checking in
    * @param {string} user User checking
    * @returns {Promise<boolean>}
    */
-  private static async checkPrivilege(client: MatrixClient,
-                                      room: string,
-                                      user: string): Promise<boolean> {
+  private async checkPrivilege(room: string, user: string): Promise<boolean> {
+    const client = this.appservice.botClient;
     const powerLevels = await client.getRoomStateEvent(
       room,
       'm.room.power_levels',
@@ -46,37 +75,13 @@ export class CmdManager {
     const hasPerms = (senderPower >= stateEventPower);
 
     if (!hasPerms) {
-      await client.sendText(
+      await client.sendNotice(
         room,
         `You need a higher power level (<${stateEventPower})`,
       );
     }
 
     return hasPerms;
-  }
-
-  /**
-   * This handles m.room.message events that involve commands
-   * @param {string} room Room ID
-   * @param {string} sender
-   * @param {string} body Text-body of the command
-   * @returns {Promise<void>}
-   */
-  public async onMxMessage(room: string, sender: string, body: string) {
-    // args = ["!minecraft", "bridge" || "unbridge" || undefined]
-    const args = body.split(' ');
-    const client = this.appservice.botClient;
-
-    switch (args[1]) {
-      case 'bridge':
-        await this.handleBridge(room, sender, args);
-        break;
-      case 'unbridge':
-        await this.handleUnbridge(room, sender, args);
-        break;
-      default:
-        await client.sendText(room, CmdManager.help);
-    }
   }
 
   /**
@@ -88,28 +93,57 @@ export class CmdManager {
     const client = this.appservice.botClient;
 
     if (err instanceof BridgeError.BridgedAlreadyError) {
-      await client.sendText(
+      await client.sendNotice(
         room,
         "This room is already bridged to a server.",
       );
     } else if (err instanceof Error) {
       if (err.message == 'Invalid room ID or alias') {
-        await client.sendText(
+        await client.sendNotice(
           room,
           CmdManager.help
         );
       } else {
-        await client.sendText(
+        await client.sendNotice(
           room,
           "Something went wrong: " + err.message
         );
       }
     } else {
-      await client.sendText(
+      await client.sendNotice(
         room,
         'Something went wrong'
       );
     }
+  }
+
+  /**
+   * Makes an announcement as the Server in Minecraft.
+   * @param {string} room Room ID
+   * @param {string} sender User ID
+   * @param {string} body Body of the announcement
+   */
+  private async announce(room: string, sender: string, body: string) {
+    const client = this.appservice.botClient;
+    const hasPerms = await this.checkPrivilege(room, sender);
+
+    if (!hasPerms) {
+      return;
+    }
+
+    const isBridged = await this.main.bridges.isRoomBridged(room);
+
+    if (isBridged) {
+      this.main.sendToMinecraft({
+        body: "[Server] " + body,
+        room: room,
+        sender
+      });
+      await client.sendNotice(room, "Sent!");
+    } else {
+      await client.sendNotice(room, "This room isn't bridged.")
+    }
+
   }
 
   /**
@@ -119,22 +153,22 @@ export class CmdManager {
    * @param {string[]} args ["!minecraft", "bridge", "<room id>" || undefined]
    * @returns {Promise<void>}
    */
-  private async handleBridge(room: string, sender: string, args: string[]) {
+  private async bridge(room: string, sender: string, args: string[]) {
     const client = this.appservice.botClient;
 
     try {
       // Get the room they're referring to
       const target = await client.resolveRoom(args[2] || '');
       if (!target) {
-        await client.sendText(room, "That room doesn't exist");
+        await client.sendNotice(room, "That room doesn't exist");
         return;
       }
 
       // See if the user has state_default perms
-      const hasPerms = await CmdManager.checkPrivilege(client, room, sender);
+      const hasPerms = await this.checkPrivilege(room, sender);
       if (hasPerms) {
         const bridge = this.main.bridges.bridge(target);
-        await client.sendText(
+        await client.sendNotice(
           room,
           'Bridged! Go-to the Minecraft server and execute' +
           `"/bridge <token>"\n${bridge.id}`
@@ -153,7 +187,7 @@ export class CmdManager {
    * ["!minecraft", "unbridge", "<room id>" || undefined]
    * @returns {Promise<void>}
    */
-  private async handleUnbridge(room: string, sender: string, args: string[]) {
+  private async unbridge(room: string, sender: string, args: string[]) {
     const client = this.appservice.botClient;
 
     try {
@@ -161,20 +195,20 @@ export class CmdManager {
       const target = await client.resolveRoom(args[2] || '');
 
       if (!target) {
-        await client.sendText(room, "That room doesn't exist");
+        await client.sendNotice(room, "That room doesn't exist");
         return;
       }
 
       // See if the user has state_default perms
-      const hasPerms = await CmdManager.checkPrivilege(client, room, sender);
+      const hasPerms = await this.checkPrivilege(room, sender);
 
       if (hasPerms) {
         const unbridged = this.main.bridges.unbridge(target);
 
         if (unbridged)
-          await client.sendText(room, "Room has been unbridged.");
+          await client.sendNotice(room, "Room has been unbridged.");
         else
-          await client.sendText(room, "The room was never bridged.");
+          await client.sendNotice(room, "The room was never bridged.");
       }
     } catch (err) {
       await this.bridgeError(room, err);
