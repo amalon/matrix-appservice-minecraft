@@ -21,6 +21,7 @@ bridged with.
 | Parameter | Type      | Description                          |
 |-----------|-----------|--------------------------------------|
 | message   | MxMessage | A formatted message by MsgProcessor  |
+
 The MatrixInterface uses this method to send an `m.room.message` to
 Minecraft. Right now all the method does is store the room message in memory
 until the bridged Minecraft server comes to retrieve it, which is done at
@@ -31,6 +32,7 @@ the `getNewMxMessages` method.
 |-----------|------------------|-------------------------|
 | bridge    | Bridge           | Bridged room to send to |
 | message   | MCEvents.Message | Message to send         |
+
 The WebInterface uses this method when a Minecraft server sends a POST
 request that contains a new Minecraft chat message that a player sent. From
 here Main will give it to `<MatrixInterface>.sendMessage` where it is relayed
@@ -51,6 +53,7 @@ this method must be called.
 |-----------|------------------|-------------------------|
 | bridge    | Bridge           | Bridged room to send to |
 | message   | MCEvents.Message | Message to send         |
+
 This method sends a Minecraft chat message to the provided bridged Matrix room.
 It first makes sure the puppeted Matrix user is in sync with the Minecraft
 player that it represents, this is done by the `PlayerManager.sync` method
@@ -61,6 +64,7 @@ player that it represents, this is done by the `PlayerManager.sync` method
 | Parameter | Type   | Description      |
 |-----------|--------|------------------|
 | bridge    | Bridge | The bridged room |
+
 When a Minecraft server comes to retrieve all the new missed messages from
 the room it's bridged with then this method returns an array of string. Each
 string is pre-formatted (by the MsgProcessor class) to be sent to the
@@ -70,6 +74,7 @@ Minecraft chat.
 | Parameter | Type      | Description                          |
 |-----------|-----------|--------------------------------------|
 | message   | MxMessage | A formatted message by MsgProcessor  |
+
 This stores all new Matrix messages in memory for a Minecraft server to come
 and retrieve (see Main.getNewMxMessages)
 
@@ -78,6 +83,7 @@ and retrieve (see Main.getNewMxMessages)
 |-----------|--------|--------------------------------------------|
 | room      | string | The room to retrieve the profile data from |
 | user      | string | The user being retrieved                   |
+
 This gets the [`m.room.member` state event](https://matrix.org/docs/spec/client_server/r0.6.1#m-room-member) 
 of a given user in a given room. This is a utility method.
 
@@ -86,6 +92,7 @@ of a given user in a given room. This is a utility method.
 |-----------|--------|---------------------------------|
 | room      | string | The room the message came  from |
 | event     | any    | The m.room.message event object |
+
 This method intakes m.room.message events. It first sees if it's a !minecraft
 command if it is then it gives it to CmdManager.onMxMessage, otherwise
 it checks if the message is coming from a bridged room if it is then
@@ -104,6 +111,7 @@ To see how each endpoint is processed then see the
 | Parameter | Type   | Description             |
 |-----------|--------|-------------------------|
 | app       | Router | Router to extend off of |
+
 This gets the WebInterface ready for use, this must be called before
 anything can happen.
 
@@ -112,6 +120,7 @@ anything can happen.
 |-----------|----------|-------------------------------------------------|
 | req       | Request  | The request object being read from              |
 | res       | Response | The response object being sent to the requester |
+
 This method intakes an HTTP request that has a bearer token. In that token
 should determine whether it's bridged with a room or not. If it the
 requester has a valid JSON web token then it responds with the room the
@@ -123,6 +132,7 @@ server is bridged with.
 | req       | Request      | The request object being read from              |
 | res       | Response     | The response object being sent to the requester |
 | next      | NextFunction | This is called if the checkAuth passes          |
+
 This authorizes every request other than the vibe check request. When a
 request passes a couple of properties are added to the Request object which
 can be read from in future methods:
