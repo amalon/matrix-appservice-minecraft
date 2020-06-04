@@ -44,10 +44,10 @@ export class WebInterface {
     const auth = req.header('Authorization');
     const id = uuid();
 
+    LogService.info("WebInterface", `[Request ${id}]`);
     LogService.info(
-      "marco:WebServer",
-      `Vibe Request ${id}\n` +
-      ` - User-Agent: ${req.header('User-Agent')}`
+      "WebInterface",
+      `[Request ${id}]: Endpoint ${req.method} ${req.path}`
     );
 
     try {
@@ -70,18 +70,9 @@ export class WebInterface {
         return;
       }
 
-      LogService.info(
-        "marco:WebServer",
-        `Vibe Request ${id}\n` +
-        ` - token: ${token}`
-      );
       const bridge = this.main.bridges.getBridge(token);
 
-      LogService.info(
-        "marco:WebServer",
-        `Vibe Request ${id}\n` +
-        ` - Valid Bridge`
-      );
+      LogService.info("WebInterface", `[Request ${id}]: Authorized`);
 
       res.status(200);
       res.send({
@@ -93,9 +84,8 @@ export class WebInterface {
     } catch (err) {
       if (err instanceof BridgeError.NotBridgedError) {
         LogService.warn(
-          "marco:WebServer",
-          `Vibe Request ${id}\n` +
-          `Invalid Bridge`
+          "WebInterface",
+          `[Request ${id}]: Unauthorized`
         );
         res.status(401);
         res.send(Errors.invalidTokenError);
@@ -110,11 +100,7 @@ export class WebInterface {
       }
     }
 
-    LogService.info(
-      "marco:WebServer",
-      `Vibe Request ${id}\n` +
-      ` - Finished`
-    );
+    LogService.info("WebInterface", `[Request ${id}]: Finished`);
   }
 
   /**
@@ -128,11 +114,10 @@ export class WebInterface {
     // logging purposes)
     const id = uuid();
 
+    LogService.info("WebInterface", `[Request ${id}]`);
     LogService.info(
-      "marco:WebServer",
-      `Request ${id}\n` +
-      ` - Endpoint: ${req.method} ${req.path}\n` +
-      ` - User-Agent: ${req.header('User-Agent')}`
+      "WebInterface",
+      `[Request ${id}]: Endpoint ${req.method} ${req.path}`
     );
 
     const auth = req.header('Authorization');
@@ -163,9 +148,8 @@ export class WebInterface {
       const bridge = this.main.bridges.getBridge(token);
 
       LogService.info(
-        "marco:WebServer",
-        `Request ${id}\n` +
-        " - Authorized"
+        "WebInterface",
+        `[Request ${id}]: Authorized`
       );
 
       // @ts-ignore

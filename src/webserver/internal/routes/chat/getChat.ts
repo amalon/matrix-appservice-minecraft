@@ -26,8 +26,7 @@ export function getChat(req: Request, res: Response) {
   res.send(chat);
   res.end();
   LogService.info(
-    'marco-webserver',
-    `Request ${id}`,
-    ' - Finished.'
+    'WebInterface',
+    `[Request ${id}]: Finished.`
   );
 }
