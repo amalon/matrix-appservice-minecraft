@@ -105,6 +105,83 @@ export class MatrixInterface {
   }
 
   /**
+   * This intakes a Minecraft join event and relays it the provided bridged
+   * room.
+   * @param {Bridge} bridge
+   * @param {MCEvents.Join} mcJoin
+   * @returns {Promise<void>}
+   */
+  public async sendJoin(bridge: Bridge, mcJoin: MCEvents.Join): Promise<void> {
+    // The player UUID is the Matrix appservice user's Matrix ID
+    const uuid = await mcJoin.player.getUUID();
+    // This is the representing Matrix user
+    const intent = this.appservice.getIntentForSuffix(uuid);
+
+    try {
+      await intent.ensureRegistered();
+      // Keep the player name, skin in sync with their profile data on Matrix
+      await this.main.players.sync(intent, mcJoin.player);
+
+      // Finally send the message to the room, half of these steps are
+      // skipped to this if everything has already been completed before
+      // (such as inviting, joining, and syncing unless the player updated a
+      // certain detail that we keep synced)
+    } catch (err) {
+      let errMessage = 'An error occurred while joining a bridged room.\n'
+      if (err instanceof Error) {
+        errMessage += ` - message: ${err.message}\n`;
+        errMessage += ` - stack:\n${err.stack}`;
+      } else {
+        errMessage += ' - error: ' + err;
+      }
+      LogService.error('marco-matrix', errMessage);
+    } finally {
+      // what matters most is that the room is joined.
+      await intent.joinRoom(
+        bridge.room
+      );
+    }
+  }
+
+  /**
+   * This intakes a Minecraft quit event and relays it the provided bridged
+   * room.
+   * @param {Bridge} bridge
+   * @param {MCEvents.Quit} mcQuit
+   * @returns {Promise<void>}
+   */
+  public async sendQuit(bridge: Bridge, mcQuit: MCEvents.Quit): Promise<void> {
+    // The player UUID is the Matrix appservice user's Matrix ID
+    const uuid = await mcQuit.player.getUUID();
+    // This is the representing Matrix user
+    const intent = this.appservice.getIntentForSuffix(uuid);
+
+    try {
+      await intent.ensureRegistered();
+      // We don't bother keeping the player name, skin in sync with their
+      // profile data on Matrix right now, since the player is leaving
+
+      // Finally send the event to the room, half of these steps are
+      // skipped to this if everything has already been completed before
+      // (such as inviting & joining)
+    } catch (err) {
+      let errMessage = 'An error occurred while leaving a bridged room.\n'
+      if (err instanceof Error) {
+        errMessage += ` - message: ${err.message}\n`;
+        errMessage += ` - stack:\n${err.stack}`;
+      } else {
+        errMessage += ' - error: ' + err;
+      }
+      LogService.error('marco-matrix', errMessage);
+    } finally {
+      // what matters most is that the room is left.
+      await intent.leaveRoom(
+        bridge.room
+      );
+    }
+  }
+
+  /**
    * This returns all the new room messages of a given bridge since the
    * last time requested.
    * @param {Bridge} bridge

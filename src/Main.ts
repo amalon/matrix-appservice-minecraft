@@ -90,4 +90,32 @@ export class Main {
   public sendToMatrix(bridge: Bridge, message: MCEvents.Message) {
     return this.matrix.sendMessage(bridge, message);
   }
+
+  /**
+   * This handles Minecraft join events provided by a Minecraft server
+   * Minecraft (POST Request) Player join event ->        WebInterface
+   * Minecraft (POST Response)                  <- 200 OK WebInterface
+   *
+   * @param {Bridge} bridge Bridged room
+   * @param {MCEvents.Join} join Join event to send
+   * @returns {Promise<void>}
+   * @throws {NotBridgedError}
+   */
+  public joinToMatrix(bridge: Bridge, join: MCEvents.Join) {
+    return this.matrix.sendJoin(bridge, join);
+  }
+
+  /**
+   * This handles Minecraft quit events provided by a Minecraft server
+   * Minecraft (POST Request) Player join event ->        WebInterface
+   * Minecraft (POST Response)                  <- 200 OK WebInterface
+   *
+   * @param {Bridge} bridge Bridged room
+   * @param {MCEvents.Quit} quit Quit event to send
+   * @returns {Promise<void>}
+   * @throws {NotBridgedError}
+   */
+  public quitToMatrix(bridge: Bridge, quit: MCEvents.Quit) {
+    return this.matrix.sendQuit(bridge, quit);
+  }
 }
