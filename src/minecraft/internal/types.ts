@@ -16,9 +16,39 @@ export module MCEvents {
    * This represents a message coming from a player on Minecraft.
    * @type Message
    * @prop {Player} player The player that sent the message
-   * @prop {string} body The body of the message
+   * @prop {string} message The body of the message
    */
   export interface Message extends Event {
+    message: string;
+  }
+
+  /**
+   * This represents a player joining the Minecraft server.
+   * @type Join
+   * @prop {Player} player The player that joined
+   * @prop {string} message The join message
+   */
+  export interface Join extends Event {
+    message: string;
+  }
+
+  /**
+   * This represents a player quitting the Minecraft server.
+   * @type Quit
+   * @prop {Player} player The player that quit
+   * @prop {string} message The quit message
+   */
+  export interface Quit extends Event {
+    message: string;
+  }
+
+  /**
+   * This represents a player getting kicked from the Minecraft server.
+   * @type Kick
+   * @prop {Player} player The player that was kicked
+   * @prop {string} message The kick reason
+   */
+  export interface Kick extends Event {
     message: string;
   }
 }

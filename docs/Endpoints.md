@@ -50,3 +50,54 @@ be null or undefined.
 
 #### Response Body:
 None (200 OK)
+
+### POST /chat/join
+This endpoint is for joining a Minecraft player to the bridged Matrix room.
+
+#### Required Headers:
+The provided JSON web token describes what room the server is bridged with.
+ - Content-Type: `application/json`
+ - Authorization: `Bearer <JSON WEB TOKEN>`
+
+#### Request Body:
+| Attribute | Type   | Description                           |
+|-----------|--------|---------------------------------------|
+| message   | string | The raw join message text             |
+| player    | Player | The player who joined                 |
+
+#### Response Body:
+None (200 OK)
+
+### POST /chat/quit
+This endpoint is for making a Minecraft player leave the bridged Matrix room.
+
+#### Required Headers:
+The provided JSON web token describes what room the server is bridged with.
+ - Content-Type: `application/json`
+ - Authorization: `Bearer <JSON WEB TOKEN>`
+
+#### Request Body:
+| Attribute | Type   | Description                           |
+|-----------|--------|---------------------------------------|
+| message   | string | The raw quit message text             |
+| player    | Player | The player who quit                   |
+
+#### Response Body:
+None (200 OK)
+
+### POST /chat/kick
+This endpoint is for kicking a Minecraft player from the bridged Matrix room.
+
+#### Required Headers:
+The provided JSON web token describes what room the server is bridged with.
+ - Content-Type: `application/json`
+ - Authorization: `Bearer <JSON WEB TOKEN>`
+
+#### Request Body:
+| Attribute | Type   | Description                           |
+|-----------|--------|---------------------------------------|
+| message   | string | The kick reason                       |
+| player    | Player | The player who was kicked             |
+
+#### Response Body:
+None (200 OK)
