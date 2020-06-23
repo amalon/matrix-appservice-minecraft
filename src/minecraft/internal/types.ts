@@ -7,6 +7,66 @@
 import type { Player } from "./Player";
 
 
+export module MxEvents {
+  /**
+   * This represents a Matrix user.
+   * @type User
+   * @prop {string} msid Full Matrix ID in the form @localpart:homeserver
+   * @prop {string} displayName More readable name of Matrix user
+   */
+  export type User = {
+    mxid: string;
+    displayName: string;
+  }
+
+  /**
+   * This represents an event from Matrix that Minecraft needs to handle.
+   * It is extended depending on the type string.
+   * @type Event
+   * @prop {User} sender The Matrix user who originated the event
+   * @prop {string} type An identifier to determine the type of event
+   */
+  export interface Event {
+    sender: User;
+    type: string;
+  }
+
+  /**
+   * A message event is one that usually ends up being send to broadcast to
+   * Minecraft users.
+   * It is further extended depending on the type string.
+   * @type MessageEvent
+   * @prop {string} body Message body
+   */
+  export interface MessageEvent extends Event {
+    body: string;
+  }
+
+  /**
+   * A normal text message send from a Matrix user.
+   * @type TextMessageEvent
+   */
+  export interface TextMessageEvent extends MessageEvent {
+    type: "message.text";
+  }
+
+  /**
+   * An emote message send from a Matrix user.
+   * @type EmoteMessageEvent
+   */
+  export interface EmoteMessageEvent extends MessageEvent {
+    type: "message.emote";
+  }
+
+  /**
+   * An announcement message send from a sufficiently privileged Matrix user.
+   * @type AnnounceMessageEvent
+   */
+  export interface AnnounceMessageEvent extends MessageEvent {
+    type: "message.announce";
+  }
+}
+
 export module MCEvents {
   export type Event = {
     player: Player;

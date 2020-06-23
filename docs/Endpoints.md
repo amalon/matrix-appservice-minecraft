@@ -24,6 +24,79 @@ The response body returns an array of pre-formatted messages like
 |-----------|----------|----------------------------------------------------------------------------|
 | chat      | string[] | An array of pre-formatted messages ready to be sent to the Minecraft chat. |
 
+### GET /events
+
+#### Required Headers:
+The provided JSON web token describes what room the server is bridged with.
+ - Content-Type: `application/json`
+ - Authorization: `Bearer <JSON WEB TOKEN>`
+
+#### Request Body
+None
+
+#### Response Body:
+The response body returns an array of structured events.
+
+| Attribute | Type      | Description                                                       |
+|-----------|-----------|-------------------------------------------------------------------|
+| events    | MxEvent[] | An array of structured events for the Minecraft plugin to handle. |
+
+##### MxEvent Object:
+This describes the Matrix event. It must have at least the following fields,
+but may have more depending on the type:
+
+| Attribute | Type   | Description                     |
+|-----------|--------|---------------------------------|
+| sender    | MxUser | The Matrix sender of the event. |
+| type      | string | An event type identifier.       |
+
+##### MxUser Object:
+This describes a Matrix user, allowing the Minecraft plugin to format it as it
+likes, for example showing the displayName but with the MXID in a tooltip.
+
+| Attribute   | Type   | Description                  |
+|-------------|--------|------------------------------|
+| mxid        | string | Matrix ID of user.           |
+| displayName | string | The displayName of the user. |
+
+##### message.text Event:
+This describes a normal text message send by the Matrix sender user. It extends
+the MxEvent object with the following additional fields:
+
+| Attribute | Type   | Description             |
+|-----------|--------|-------------------------|
+| type      | string | must be "message.text". |
+| body      | string | The message itself.     |
+
+The Minecraft plugin is expected to broadcast the message, prefixing the body
+with the name of the sender.
+
+##### message.emote Event:
+This describes an emote message send by the Matrix sender user (e.g. with
+"/me").
+It extends the MxEvent object with the following additional fields:
+
+| Attribute | Type   | Description              |
+|-----------|--------|--------------------------|
+| type      | string | must be "message.emote". |
+| body      | string | The message itself.      |
+
+The Minecraft plugin is expected to broadcast the message, prefixing the body
+with e.g. "\*" and the name of the sender.
+
+##### message.announce Event:
+This describes an announcement message send by a sufficiently privileged Matrix
+sender user (i.e. with "!minecraft announce").
+It extends the MxEvent object with the following additional fields:
+
+| Attribute | Type   | Description                 |
+|-----------|--------|-----------------------------|
+| type      | string | must be "message.announce". |
+| body      | string | The message itself.         |
+
+The Minecraft plugin is expected to broadcast the message as if send from the
+Minecraft server console, e.g. prefixing the body with "[Server] ".
+
 ### POST /chat
 This endpoint is for sending a Minecraft chat message to the bridged Matrix
  room.

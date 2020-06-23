@@ -3,7 +3,7 @@ import { Config } from "./Config";
 import { Bridge, BridgeManager } from "./bridging";
 import { MatrixInterface } from "./matrix";
 import { DBController } from "./db";
-import { MCEvents, PlayerManager } from "./minecraft";
+import { MxEvents, MCEvents, PlayerManager } from "./minecraft";
 import { MxMessage } from "./matrix/MatrixInterface";
 
 
@@ -71,9 +71,9 @@ export class Main {
    * This gets all the new messages from a bridged Matrix room
    * Minecraft (GET Request)  ->           WebInterface
    * Minecraft (GET Response) <- string[]  WebInterface
-   * @returns {string[]}
+   * @returns {MxEvents.Event[]}
    */
-  public getNewMxMessages(bridge: Bridge): string[] {
+  public getNewMxMessages(bridge: Bridge): MxEvents.Event[] {
     return this.matrix.getNewMxMessages(bridge);
   }
 

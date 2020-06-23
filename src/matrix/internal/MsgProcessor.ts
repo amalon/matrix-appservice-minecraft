@@ -1,4 +1,5 @@
 import { MatrixInterface, MxMessage } from "../MatrixInterface";
+import { MxEvents } from "../../minecraft";
 
 export class MsgProcessor {
   constructor(private readonly matrix: MatrixInterface) {}
@@ -19,9 +20,17 @@ export class MsgProcessor {
     const name: string = roomMember['displayname'] || sender;
 
     return {
-      sender,
+      sender: sender,
       room,
       body: ` * <${name}> ${body}`,
+      event: <MxEvents.EmoteMessageEvent> {
+        sender: {
+          mxid: sender,
+          displayName: name
+        },
+        type: "message.emote",
+        body: body,
+      } as MxEvents.Event
     };
   }
 
@@ -41,9 +50,17 @@ export class MsgProcessor {
     const name: string = roomMember['displayname'] || sender;
 
     return {
-      sender,
+      sender: sender,
       room,
       body: `<${name}> ${body}`,
+      event: <MxEvents.TextMessageEvent> {
+        sender: {
+          mxid: sender,
+          displayName: name
+        },
+        type: "message.text",
+        body: body,
+      } as MxEvents.Event
     };
   }
 }
