@@ -65,6 +65,47 @@ export module MxEvents {
   export interface AnnounceMessageEvent extends MessageEvent {
     type: "message.announce";
   }
+
+  /**
+   * A player event is one that relates to a specific player.
+   * It is further extended depending on the type string.
+   * @type PlayerEvent
+   * @prop {Player} player The player this event relates to
+   */
+  export interface PlayerEvent extends Event {
+    player: Player;
+  }
+
+  /**
+   * A player has been kicked from the room by a Matrix user.
+   * The Minecraft server may wish to kick the player from the server too.
+   * @type KickPlayerEvent
+   * @prop {string} reason The optional reason for the kicking
+   */
+  export interface KickPlayerEvent extends PlayerEvent {
+    type: "player.kick";
+    reason?: string;
+  }
+
+  /**
+   * A player has been banned from the room by a Matrix user.
+   * The Minecraft server may wish to ban the player from the server too.
+   * @type BanPlayerEvent
+   * @prop {string} reason The optional reason for the banning
+   */
+  export interface BanPlayerEvent extends PlayerEvent {
+    type: "player.ban";
+    reason?: string;
+  }
+
+  /**
+   * A player has been unbanned from the room by a Matrix user.
+   * The Minecraft server may wish to unban the player from the server too.
+   * @type UnbanPlayerEvent
+   */
+  export interface UnbanPlayerEvent extends PlayerEvent {
+    type: "player.unban";
+  }
 }
 
 export module MCEvents {

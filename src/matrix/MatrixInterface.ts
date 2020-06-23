@@ -61,6 +61,7 @@ export class MatrixInterface {
     matrix.AutojoinRoomsMixin.setupOnAppservice(this.appservice);
 
     this.appservice.on('room.message', this.onMxMessage.bind(this));
+    this.appservice.on('room.leave', this.onMxLeave.bind(this));
     this.appservice.on('query.user', this.onQueryUser.bind(this));
 
     await this.appservice.begin();
@@ -245,6 +246,15 @@ export class MatrixInterface {
   }
 
   /**
+   * This gets the Minecraft player UUID corresponding to the provided Matrix ID
+   * @param {string} user The user being retrieved
+   * @returns {string}
+   */
+  public getPlayerUUID(user: string): string | undefined {
+    return this.appservice.getSuffixForUserId(user);
+  }
+
+  /**
    * This intakes m.room.message events. It first sees if it's a !minecraft
    * command if it is then it gives it to CmdManager.onMxMessage, otherwise
    * it checks if the message is coming from a bridged room if it is then
@@ -282,6 +292,49 @@ export class MatrixInterface {
       // Handle m.emote message
     } else if (msgtype == 'm.emote') {
       let message = await this.msgProcessor.buildEmoteMsg(room, event);
+
+      // Give it to Main to handle
+      this.main.sendToMinecraft(message);
+    }
+  }
+
+  /**
+   * This intakes m.room.member state events due to leaving, kicking, banning &
+   * unbanning. It checks if the member change is a kick, a ban, or an unban.
+   * If it is then it processes the state change and sends it to
+   * Main.something.
+   * @param {string} room Room Matrix ID
+   * @param {any} event m.room.member state event
+   */
+  private async onMxLeave(room: string, event: any): Promise<void> {
+    // Check if the m.room.member state event was sent in a bridged room
+    const isBridged = this.main.bridges.isRoomBridged(room);
+    if (!isBridged)
+      return;
+
+    // Check it relates to one of our Minecraft users
+    const stateKey: string = event['state_key'];
+    if (!this.appservice.isNamespacedUser(stateKey))
+      return;
+
+    const content: any | undefined = event['content'];
+    const oldContent: any | undefined = event['prev_content'] || {};
+    const membership: string = content['membership'];
+    const oldMembership: string = oldContent['membership'] || "leave";
+    const sender: string = event['sender'];
+
+    if (membership == 'ban') {
+      let message = await this.msgProcessor.buildBanMsg(room, event);
+
+      // Give it to Main to handle
+      this.main.sendToMinecraft(message);
+    } else if (oldMembership == 'ban') {
+      let message = await this.msgProcessor.buildUnbanMsg(room, event);
+
+      // Give it to Main to handle
+      this.main.sendToMinecraft(message);
+    } else if (membership == 'leave' && oldMembership == 'join') {
+      let message = await this.msgProcessor.buildKickMsg(room, event);
 
       // Give it to Main to handle
       this.main.sendToMinecraft(message);

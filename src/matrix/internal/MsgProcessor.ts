@@ -1,5 +1,6 @@
 import { MatrixInterface, MxMessage } from "../MatrixInterface";
 import { MxEvents } from "../../minecraft";
+import { Player } from "../../minecraft/internal/Player";
 
 export class MsgProcessor {
   constructor(private readonly matrix: MatrixInterface) {}
@@ -60,6 +61,84 @@ export class MsgProcessor {
         },
         type: "message.text",
         body: body,
+      } as MxEvents.Event
+    };
+  }
+
+  public async buildKickMsg(room: string, event: any): Promise<MxMessage> {
+    const content = event['content'];
+    const reason = content['reason'];
+    const prevContent = event['prev_content'] || {};
+    const sender = event['sender'];
+    const victim = event['state_key'];
+
+    const senderRoomMember = await this.matrix.getRoomMember(room, sender);
+    const victimUUID: string | undefined = this.matrix.getPlayerUUID(victim);
+    const senderName: string = senderRoomMember['displayname'] || sender;
+    const victimName: string = prevContent['displayname'] || victimUUID;
+
+    return {
+      sender: sender,
+      room,
+      event: <MxEvents.KickPlayerEvent> {
+        sender: {
+          mxid: sender,
+          displayName: senderName
+        },
+        type: "player.kick",
+        player: new Player(victimName, victimUUID),
+        reason: reason
+      } as MxEvents.Event
+    };
+  }
+
+  public async buildBanMsg(room: string, event: any): Promise<MxMessage> {
+    const content = event['content'];
+    const reason = content['reason'];
+    const prevContent = event['prev_content'] || {};
+    const sender = event['sender'];
+    const victim = event['state_key'];
+
+    const senderRoomMember = await this.matrix.getRoomMember(room, sender);
+    const victimUUID: string | undefined = this.matrix.getPlayerUUID(victim);
+    const senderName: string = senderRoomMember['displayname'] || sender;
+    const victimName: string = prevContent['displayname'] || victimUUID;
+
+    return {
+      sender: sender,
+      room,
+      event: <MxEvents.BanPlayerEvent> {
+        sender: {
+          mxid: sender,
+          displayName: senderName
+        },
+        type: "player.ban",
+        player: new Player(victimName, victimUUID),
+        reason: reason
+      } as MxEvents.Event
+    };
+  }
+
+  public async buildUnbanMsg(room: string, event: any): Promise<MxMessage> {
+    const prevContent = event['prev_content'];
+    const sender = event['sender'];
+    const victim = event['state_key'];
+
+    const senderRoomMember = await this.matrix.getRoomMember(room, sender);
+    const victimUUID: string | undefined = this.matrix.getPlayerUUID(victim);
+    const senderName: string = senderRoomMember['displayname'] || sender;
+    const victimName: string = prevContent['displayname'] || victimUUID;
+
+    return {
+      sender: sender,
+      room,
+      event: <MxEvents.UnbanPlayerEvent> {
+        sender: {
+          mxid: sender,
+          displayName: senderName
+        },
+        type: "player.unban",
+        player: new Player(victimName, victimUUID)
       } as MxEvents.Event
     };
   }
