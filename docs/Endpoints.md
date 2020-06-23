@@ -97,6 +97,44 @@ It extends the MxEvent object with the following additional fields:
 The Minecraft plugin is expected to broadcast the message as if send from the
 Minecraft server console, e.g. prefixing the body with "[Server] ".
 
+##### dev.dhdf.mx.player.kick Event:
+This describes the kicking of a Minecraft user from the Matrix room.
+It extends the MxEvent object with the following additional fields:
+
+| Attribute | Type   | Description                        |
+|-----------|--------|------------------------------------|
+| type      | string | must be "dev.dhdf.mx.player.kick". |
+| player    | Player | The player who was kicked.         |
+| reason    | string | Optional reason for the kicking.   |
+
+The Minecraft plugin may respond to this event by kicking the player from the
+server too.
+
+##### dev.dhdf.mx.player.ban Event:
+This describes the banning of a Minecraft user from the Matrix room.
+It extends the MxEvent object with the following additional fields:
+
+| Attribute | Type   | Description                       |
+|-----------|--------|-----------------------------------|
+| type      | string | must be "dev.dhdf.mx.player.ban". |
+| player    | Player | The player who was banned.        |
+| reason    | string | Optional reason for the banning.  |
+
+The Minecraft plugin may respond to this event by banning the player from the
+server too.
+
+##### dev.dhdf.mx.player.unban Event:
+This describes the unbanning of a Minecraft user from the Matrix room.
+It extends the MxEvent object with the following additional fields:
+
+| Attribute | Type   | Description                         |
+|-----------|--------|-------------------------------------|
+| type      | string | must be "dev.dhdf.mx.player.unban". |
+| player    | Player | The player who was unbanned.        |
+
+The Minecraft plugin may respond to this event by unbanning the player from the
+server too.
+
 ### POST /chat
 This endpoint is for sending a Minecraft chat message to the bridged Matrix
  room.
