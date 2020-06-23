@@ -2,7 +2,7 @@
  * This is the chat endpoint it allows Polo to send and retrieve messages
  */
 import express, { Request } from 'express';
-import { getChat } from "./getChat";
+import { getChat, getChatEvents } from "./getChat";
 import { checkIntegrity, postChat } from "./postChat";
 import { postJoin, postQuit, postKick } from "./postJoin";
 import { LogService } from "matrix-bot-sdk";
@@ -30,6 +30,27 @@ chatRouter.get('/', ((req, res) => {
 
 // this checks to make sure Polo is calling this endpoint properly
 chatRouter.post('/', ((req, res, next) => {
+  try {
+    checkIntegrity(req, res, next);
+  } catch (err) {
+    errorHandler(req, err);
+  }
+}));
+
+/**
+ * GET /chat/events/
+ * Polo will call this endpoint to get all the events from the Matrix room
+ */
+chatRouter.get('/events/', ((req, res) => {
+  try {
+    getChatEvents(req, res);
+  } catch (err) {
+    errorHandler(req, err);
+  }
+}));
+
+// this checks to make sure Polo is calling this endpoint properly
+chatRouter.post('/events/', ((req, res, next) => {
   try {
     checkIntegrity(req, res, next);
   } catch (err) {

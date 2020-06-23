@@ -1,6 +1,7 @@
 import { Appservice } from "matrix-bot-sdk";
 import { Main } from "../../Main";
 import { BridgeError } from "../../bridging";
+import { MxEvents } from "../../minecraft";
 
 
 /**
@@ -135,9 +136,17 @@ export class CmdManager {
 
     if (isBridged) {
       this.main.sendToMinecraft({
-        body: "[Server] " + body,
         room: room,
-        sender
+        sender,
+        body: `[Server] ${body}`,
+        event: <MxEvents.AnnounceMessageEvent> {
+          sender: {
+            mxid: sender,
+            displayName: sender
+          },
+          type: "dev.dhdf.mx.message.announce",
+          body: body,
+        } as MxEvents.Event
       });
       await client.sendNotice(room, "Sent!");
     } else {

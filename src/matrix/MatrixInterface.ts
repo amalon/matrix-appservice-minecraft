@@ -6,13 +6,14 @@ import type { Main } from "../Main";
 import { Bridge } from "../bridging";
 import { CmdManager } from "./internal/CmdManager";
 import { MsgProcessor } from "./internal/MsgProcessor";
-import type { MCEvents } from "../minecraft";
+import type { MxEvents, MCEvents } from "../minecraft";
 
 
 export type MxMessage = {
   sender: string;
   room: string;
-  body: string;
+  body?: string;
+  event: MxEvents.Event;
 }
 
 /**
@@ -28,7 +29,7 @@ export class MatrixInterface {
   public readonly appservice: matrix.Appservice;
   private readonly main: Main;
   // Collects new messages for Minecraft servers
-  private readonly newMxMessages: Map<string, string[]>
+  private readonly newMxMessages: Map<string, MxEvents.Event[]>
   // Handles commands given by Matrix users
   private readonly cmdManager: CmdManager;
   // Converts matrix messages into McMessages
@@ -202,9 +203,9 @@ export class MatrixInterface {
    * This returns all the new room messages of a given bridge since the
    * last time requested.
    * @param {Bridge} bridge
-   * @returns {string[]}
+   * @returns {MxEvents.Event[]}
    */
-  public getNewMxMessages(bridge: Bridge): string[] {
+  public getNewMxMessages(bridge: Bridge): MxEvents.Event[] {
     let newMxMessages = this.newMxMessages.get(bridge.room);
 
     if (!newMxMessages) {
@@ -223,7 +224,7 @@ export class MatrixInterface {
     const newMxMessages = this.newMxMessages.get(message.room) || [];
 
     if (!this.appservice.isNamespacedUser(message.sender))
-      newMxMessages.push(message.body);
+      newMxMessages.push(message.event);
 
     this.newMxMessages.set(message.room, newMxMessages);
   }
