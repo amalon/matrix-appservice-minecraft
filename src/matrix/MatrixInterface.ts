@@ -60,6 +60,7 @@ export class MatrixInterface {
     matrix.AutojoinRoomsMixin.setupOnAppservice(this.appservice);
 
     this.appservice.on('room.message', this.onMxMessage.bind(this));
+    this.appservice.on('query.user', this.onQueryUser.bind(this));
 
     await this.appservice.begin();
   }
@@ -190,5 +191,16 @@ export class MatrixInterface {
       // Give it to Main to handle
       this.main.sendToMinecraft(message);
     }
+  }
+
+  /**
+   * This queries a Minecraft user that doesn't exist, allowing the appservice
+   * to arrange for it to be created.
+   * @param {string} user User Matrix ID
+   * @param {createUser} Function Callback to create the new user
+   */
+  private async onQueryUser(user: string, createUser: Function): Promise<void> {
+    // Refuse to automatically create arbitrary new users for now
+    createUser(false);
   }
 }
