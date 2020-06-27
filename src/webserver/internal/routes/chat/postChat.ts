@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import * as Errors from "../../errors";
+import { fail } from "../../validate";
 import { Main } from "../../../../Main";
 import { Bridge } from "../../../../bridging";
 import { LogService } from "matrix-bot-sdk";
@@ -54,21 +55,15 @@ export async function postChat(req: Request, res: Response): Promise<void> {
  * @param {Response} res
  * @param {NextFunction} next
  */
-export function checkIntegrity(req: Request, res: Response, next: NextFunction) {
+export function checkChatIntegrity(req: Request, res: Response, next: NextFunction) {
   // @ts-ignore
   const reqID = req['id'];
   const body = req.body;
 
   LogService.info(
     'WebInterface',
-    `[Request ${reqID}]: Checking Body Integrity`
+    `[Request ${reqID}]: Checking Chat Body Integrity`
   );
-
-  // Check if body is defined
-  if (body == undefined) {
-    fail(res, Errors.noBodyError);
-    return;
-  }
 
   // Check message
   const message = body['message'];
@@ -85,50 +80,6 @@ export function checkIntegrity(req: Request, res: Response, next: NextFunction) 
     `[Request ${reqID}]: Message "${message}"`
   )
 
-  // Check player
-  const player = body['player'];
-  if (player == undefined) {
-    fail(res, Errors.noPlayerError);
-    return;
-  } else if (!(typeof player == 'object')) {
-    fail(res, Errors.playerTypeError);
-    return;
-  }
-
-  // Check <player>.name
-  const name = player.name;
-  if (name == undefined) {
-    fail(res, Errors.noPlayerNameError);
-    return;
-  } else if (!(typeof name == 'string')) {
-    fail(res, Errors.playerNameTypeError);
-    return;
-  }
-
-  LogService.debug(
-    'WebInterface',
-    `[Request ${reqID}]: Player name "${name}"`
-  );
-
-  // Check <player>.uuid
-  const uuid = player.uuid;
-  if (uuid == undefined) {
-    fail(res, Errors.noPlayerIdError);
-  } else if (!(typeof uuid == 'string')) {
-    fail(res, Errors.playerIdTypeError);
-    return;
-  }
-
-  LogService.debug(
-    'WebInterface',
-    `[Request ${reqID}]: Player UUID "${uuid}"`
-  );
-
-  LogService.info(
-    'WebInterface',
-    `[Request ${reqID}]: Integrity Check Passed`
-  );
-
   /**
    * If the integrity passed this is what the body should look like:
    * {
@@ -140,10 +91,4 @@ export function checkIntegrity(req: Request, res: Response, next: NextFunction) 
    * }
    */
   next();
-}
-
-function fail(res: Response, error: object): void {
-  res.status(400);
-  res.send(error);
-  res.end();
 }
