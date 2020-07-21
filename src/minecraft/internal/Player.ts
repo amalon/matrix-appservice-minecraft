@@ -90,17 +90,31 @@ export class Player {
   public async getProfile(): Promise<Responses.Profile> {
     const getJSON = bent('json') as RequestFunction<Responses.Profile>
     const uuid = await this.getUUID();
+    const name = await this.getName();
     const target = Endpoints.get.profile.replace(/({uuid})/g, uuid);
 
     try {
       return await getJSON(target);
     } catch (err) {
+      const texture: Skin = {
+        'timestamp' : 0,
+        'profileId' : uuid,
+        'profileName' : name,
+        'signatureRequired' : false,
+        'textures' : {
+          "SKIN" : {
+            // Steve
+            "url" : "http://textures.minecraft.net/texture/1a4af718455d4aab528e7a61f86fa25e6a369d1768dcb13f7df319a713eb810b"
+          }
+        }
+      };
+
       return {
         'id': uuid,
-        'name': await this.getName(),
+        'name': name,
         'properties':  [ {
           "name" : "textures",
-          "value" : "ewogICJ0aW1lc3RhbXAiIDogMTU5MDg3ODkzNDQ3MCwKICAicHJvZmlsZUlkIiA6ICIzNzljNGIzMTNiNTg0NDcyODZjYjI0NjBiYjM4MzJmNiIsCiAgInByb2ZpbGVOYW1lIiA6ICJqYW1hbG9uIiwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlLzFhNGFmNzE4NDU1ZDRhYWI1MjhlN2E2MWY4NmZhMjVlNmEzNjlkMTc2OGRjYjEzZjdkZjMxOWE3MTNlYjgxMGIiCiAgICB9CiAgfQp9"
+          "value" : new Buffer(JSON.stringify(texture)).toString('base64')
         } ]
       };
     }
