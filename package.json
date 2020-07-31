@@ -4,7 +4,7 @@
   "description": "A relay bridge between multiple Minecraft servers and corresponding Matrix rooms.",
   "main": "index.js",
   "author": "Dylan Hackworth",
-  "license": "GNU GPLv3",
+  "license": "MIT",
   "dependencies": {
     "bent": "^7.3.1",
     "better-sqlite3": "^7.0.1",
