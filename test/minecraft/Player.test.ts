@@ -1,7 +1,3 @@
-/**
- * @author Dylan Hackworth <dhpf@pm.me>
- * @LICENSE GNU GPLv3
- */
 import { Player, PlayerManager } from '../../src/minecraft';
 
 
