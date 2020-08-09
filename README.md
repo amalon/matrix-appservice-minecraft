@@ -64,7 +64,7 @@ Join us in our Matrix room
 [#minecraft:dhdf.dev](https://matrix.to/#/!RUdwKvpeiDnWUyWSMJ:dhdf.dev?via=dhdf.dev)
 
 ## Compatible Plugins:
- - [Matrix Plugin](https://github.com/dhghf/matrix-plugin)
+ - [Matrix Plugin](https://github.com/dylhack/matrix-plugin)
    - By @dhghf
 
 ## Screenshots
