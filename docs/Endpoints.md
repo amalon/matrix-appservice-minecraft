@@ -158,6 +158,7 @@ be null or undefined.
 |-------------|--------|--------------------------------------|
 | name        | string | The name of the player               |
 | uuid        | string | The UUID of the player               |
+| displayName | string | Optional display name of the player  |
 | texture     | string | Optional base64 encoded texture info |
 
 #### Response Body:

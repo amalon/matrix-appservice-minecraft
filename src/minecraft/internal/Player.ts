@@ -12,12 +12,18 @@ import * as Endpoints from "./endpoints";
 export class Player {
   private name: string | null;
   private uuid: string | null;
+  private displayName?: string;
   private texture?: string;
 
-  public constructor(name?: string, uuid?: string, texture?: string) {
+  public constructor(name?: string, uuid?: string, displayName?: string, texture?: string) {
     this.name = name || null;
     this.uuid = uuid || null;
+    this.displayName = displayName;
     this.texture = texture;
+  }
+
+  public setDisplayName(displayName: string) {
+    this.displayName = displayName;
   }
 
   public setTexture(texture: string) {
@@ -71,6 +77,17 @@ export class Player {
 
       return profile.name;
     }
+  }
+
+  /**
+   * This gets the display name chosen by the player.
+   * @returns {Promise<String>}
+   */
+  public async getDisplayName(): Promise<string> {
+    if (this.displayName != null)
+      return this.displayName;
+    else
+      return this.getName();
   }
 
   /**
