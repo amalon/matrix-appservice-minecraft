@@ -33,18 +33,21 @@ export class PlayerManager {
 
    * @param {?string} name Player's name
    * @param {?string} uuid Player's UUID
+   * @param {?string} texture Player's base64 encoded texture (skin)
    * @returns {Promise<void>}
    * @throws {Error} if both parameters are undefined
    */
-  public async getPlayer(name?: string, uuid?: string): Promise<Player> {
+  public async getPlayer(name?: string, uuid?: string, texture?: string): Promise<Player> {
     let player = this.players.get(uuid || '');
 
-    if (player)
+    if (player) {
+      if (texture)
+        player.setTexture(texture);
       return player;
-    else if (!name && !uuid)
+    } else if (!name && !uuid)
       throw new Error('Both parameters can not be undefined');
     else {
-      player = new Player(name, uuid);
+      player = new Player(name, uuid, texture);
       uuid = await player.getUUID();
       this.players.set(uuid, player);
       return player;

@@ -12,10 +12,16 @@ import * as Endpoints from "./endpoints";
 export class Player {
   private name: string | null;
   private uuid: string | null;
+  private texture?: string;
 
-  public constructor(name?: string, uuid?: string) {
+  public constructor(name?: string, uuid?: string, texture?: string) {
     this.name = name || null;
     this.uuid = uuid || null;
+    this.texture = texture;
+  }
+
+  public setTexture(texture: string) {
+    this.texture = texture;
   }
 
   /**
@@ -92,6 +98,19 @@ export class Player {
     const uuid = await this.getUUID();
     const name = await this.getName();
     const target = Endpoints.get.profile.replace(/({uuid})/g, uuid);
+
+    // If we already have the texture, we can construct the profile without
+    // resorting to the Mojang API
+    if (this.texture) {
+      return {
+        'id': uuid,
+        'name': name,
+        'properties':  [ {
+          "name" : "textures",
+          "value" : this.texture
+        } ]
+      };
+    }
 
     try {
       return await getJSON(target);
