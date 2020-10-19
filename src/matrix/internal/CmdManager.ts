@@ -15,7 +15,7 @@ export class CmdManager {
     " - bridge <room ID>: This will provide an access token to give a" +
     " Minecraft server to send and retrieve messages in the room with.\n" +
     // see <CmdBridge>.handleUnbridge method
-    " - unbridge <room ID>: This will forcefully invalidate any tokens" +
+    " - unbridge [<room ID>]: This will forcefully invalidate any tokens" +
     " corresponding with this room\n" +
     ' - announce <...announcement>: This will send an announcement as' +
     ' "Server". Send this command in a bridged room.'
@@ -197,7 +197,7 @@ export class CmdManager {
 
     try {
       // Get the room they're referring to
-      const target = await client.resolveRoom(args[2] || '');
+      const target = await client.resolveRoom(args[2] || room);
 
       // See if the user has state_default perms
       const hasPerms = await this.checkPrivilege(room, sender);
