@@ -59,14 +59,15 @@ export class CmdManager {
 
   /**
    * This checks if the user has a power level greater than state_default
-   * @param {string} room Room checking in
+   * @param {string} room Room checking from
+   * @param {string} target Room to check
    * @param {string} user User checking
    * @returns {Promise<boolean>}
    */
-  private async checkPrivilege(room: string, user: string): Promise<boolean> {
+  private async checkPrivilege(room: string, target: string, user: string): Promise<boolean> {
     const client = this.appservice.botClient;
     const powerLevels = await client.getRoomStateEvent(
-      room,
+      target,
       'm.room.power_levels',
       ''
     );
@@ -134,7 +135,7 @@ export class CmdManager {
    */
   private async announce(room: string, sender: string, body: string) {
     const client = this.appservice.botClient;
-    const hasPerms = await this.checkPrivilege(room, sender);
+    const hasPerms = await this.checkPrivilege(room, room, sender);
 
     if (!hasPerms) {
       return;
@@ -169,8 +170,23 @@ export class CmdManager {
       // Get the room they're referring to
       const target = await client.resolveRoom(args[2] || '');
 
+      // Make sure the bot is present in the room, otherwise any privilege
+      // check we do may use stale power levels.
+      // We probably shouldn't just try joining in case the user isn't actually
+      // allowed to start bridging there.
+      // NOTE the matrix-bot-sdk's MatrixClient already has this cached, but
+      // its private so we can't use it.
+      const joinedRoomIds = await client.getJoinedRooms();
+      if (joinedRoomIds.indexOf(target) === -1) {
+        const userId = await client.getUserId();
+        await client.sendNotice(room,
+          'Bridge bot is not in that room. ' +
+          `Please invite ${userId} to the room and try again.`);
+        return;
+      }
+
       // See if the user has state_default perms
-      const hasPerms = await this.checkPrivilege(room, sender);
+      const hasPerms = await this.checkPrivilege(room, target, sender);
       if (hasPerms) {
         const bridge = this.main.bridges.bridge(target);
         await client.sendNotice(
@@ -200,7 +216,7 @@ export class CmdManager {
       const target = await client.resolveRoom(args[2] || room);
 
       // See if the user has state_default perms
-      const hasPerms = await this.checkPrivilege(room, sender);
+      const hasPerms = await this.checkPrivilege(room, target, sender);
 
       if (hasPerms) {
         const unbridged = this.main.bridges.unbridge(target);
