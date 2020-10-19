@@ -109,6 +109,15 @@ export class CmdManager {
           "Something went wrong: " + err.message
         );
       }
+    } else if (err instanceof Object &&
+               err.body instanceof Object &&
+               typeof err.body.error === 'string') {
+      // The error string from the Matrix server may be in there containing
+      // useful feedback
+      await client.sendNotice(
+        room,
+        'Something went wrong: ' + err.body.error
+      );
     } else {
       await client.sendNotice(
         room,
@@ -159,10 +168,6 @@ export class CmdManager {
     try {
       // Get the room they're referring to
       const target = await client.resolveRoom(args[2] || '');
-      if (!target) {
-        await client.sendNotice(room, "That room doesn't exist");
-        return;
-      }
 
       // See if the user has state_default perms
       const hasPerms = await this.checkPrivilege(room, sender);
@@ -193,11 +198,6 @@ export class CmdManager {
     try {
       // Get the room they're referring to
       const target = await client.resolveRoom(args[2] || '');
-
-      if (!target) {
-        await client.sendNotice(room, "That room doesn't exist");
-        return;
-      }
 
       // See if the user has state_default perms
       const hasPerms = await this.checkPrivilege(room, sender);
