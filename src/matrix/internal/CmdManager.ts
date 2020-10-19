@@ -1,6 +1,7 @@
 import { Appservice } from "matrix-bot-sdk";
 import { Main } from "../../Main";
 import { BridgeError } from "../../bridging";
+import { Config } from "../../Config";
 
 
 /**
@@ -21,11 +22,13 @@ export class CmdManager {
     ' "Server". Send this command in a bridged room.'
   private readonly appservice: Appservice;
   private readonly main: Main;
+  private readonly config: Config;
 
 
-  constructor(appservice: Appservice, main: Main) {
+  constructor(appservice: Appservice, main: Main, config: Config) {
     this.appservice = appservice;
     this.main = main;
+    this.config = config;
   }
 
   /**
@@ -55,6 +58,17 @@ export class CmdManager {
       default:
         await client.sendNotice(room, CmdManager.help);
     }
+  }
+
+  /**
+   * This checks if the user is appropriately whitelisted
+   * @param {string} user User to check
+   * @returns {boolean} true if whitelisted or whitelist disabled
+   */
+  private checkWhitelist(user: string): boolean {
+    return !this.config.appservice.userWhitelist ||
+           this.config.appservice.userWhitelist.length == 0 ||
+           this.config.appservice.userWhitelist.includes(user);
   }
 
   /**
@@ -165,6 +179,12 @@ export class CmdManager {
    */
   private async bridge(room: string, sender: string, args: string[]) {
     const client = this.appservice.botClient;
+
+    if (!this.checkWhitelist(sender)) {
+      await client.sendNotice(room,
+        "You are not whitelisted in the bridge config");
+      return;
+    }
 
     try {
       // Get the room they're referring to
