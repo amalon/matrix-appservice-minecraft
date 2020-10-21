@@ -50,13 +50,13 @@ export class BridgeTable {
 
   /**
    * This deletes a bridge establishment
-   * @param {string} id Bridge identifier
+   * @param {string} room Room ID
    * @returns {boolean} Whether it worked or not
    */
-  public unBridge(id: string): boolean {
+  public unBridge(room: string): boolean {
     const info = this.db.prepare(
-      'DELETE FROM bridging WHERE id=?'
-    ).run(id);
+      'DELETE FROM bridging WHERE room=?'
+    ).run(room);
 
     return (info.changes > 0);
   }

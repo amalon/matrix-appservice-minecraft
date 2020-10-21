@@ -72,10 +72,10 @@ export class BridgeManager {
 
   /**
    * This breaks a bridge
-   * @param {string} id Bridge identifier
+   * @param {string} room Room to unbridge
    * @returns {boolean} Whether or not it was successful
    */
-  public unbridge(id: string): boolean {
-    return this.db.unBridge(id);
+  public unbridge(room: string): boolean {
+    return this.db.unBridge(room);
   }
 }

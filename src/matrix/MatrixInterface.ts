@@ -47,7 +47,7 @@ export class MatrixInterface {
       homeserverUrl: config.appservice.homeserverURL,
       port: config.appservice.port
     });
-    this.cmdManager = new CmdManager(this.appservice, this.main);
+    this.cmdManager = new CmdManager(this.appservice, this.main, config);
     this.newMxMessages = new Map();
   }
 

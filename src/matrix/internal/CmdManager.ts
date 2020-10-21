@@ -1,6 +1,7 @@
 import { Appservice } from "matrix-bot-sdk";
 import { Main } from "../../Main";
 import { BridgeError } from "../../bridging";
+import { Config } from "../../Config";
 
 
 /**
@@ -15,17 +16,19 @@ export class CmdManager {
     " - bridge <room ID>: This will provide an access token to give a" +
     " Minecraft server to send and retrieve messages in the room with.\n" +
     // see <CmdBridge>.handleUnbridge method
-    " - unbridge <room ID>: This will forcefully invalidate any tokens" +
+    " - unbridge [<room ID>]: This will forcefully invalidate any tokens" +
     " corresponding with this room\n" +
     ' - announce <...announcement>: This will send an announcement as' +
     ' "Server". Send this command in a bridged room.'
   private readonly appservice: Appservice;
   private readonly main: Main;
+  private readonly config: Config;
 
 
-  constructor(appservice: Appservice, main: Main) {
+  constructor(appservice: Appservice, main: Main, config: Config) {
     this.appservice = appservice;
     this.main = main;
+    this.config = config;
   }
 
   /**
@@ -58,15 +61,27 @@ export class CmdManager {
   }
 
   /**
+   * This checks if the user is appropriately whitelisted
+   * @param {string} user User to check
+   * @returns {boolean} true if whitelisted or whitelist disabled
+   */
+  private checkWhitelist(user: string): boolean {
+    return !this.config.appservice.userWhitelist ||
+           this.config.appservice.userWhitelist.length == 0 ||
+           this.config.appservice.userWhitelist.includes(user);
+  }
+
+  /**
    * This checks if the user has a power level greater than state_default
-   * @param {string} room Room checking in
+   * @param {string} room Room checking from
+   * @param {string} target Room to check
    * @param {string} user User checking
    * @returns {Promise<boolean>}
    */
-  private async checkPrivilege(room: string, user: string): Promise<boolean> {
+  private async checkPrivilege(room: string, target: string, user: string): Promise<boolean> {
     const client = this.appservice.botClient;
     const powerLevels = await client.getRoomStateEvent(
-      room,
+      target,
       'm.room.power_levels',
       ''
     );
@@ -109,6 +124,15 @@ export class CmdManager {
           "Something went wrong: " + err.message
         );
       }
+    } else if (err instanceof Object &&
+               err.body instanceof Object &&
+               typeof err.body.error === 'string') {
+      // The error string from the Matrix server may be in there containing
+      // useful feedback
+      await client.sendNotice(
+        room,
+        'Something went wrong: ' + err.body.error
+      );
     } else {
       await client.sendNotice(
         room,
@@ -125,7 +149,7 @@ export class CmdManager {
    */
   private async announce(room: string, sender: string, body: string) {
     const client = this.appservice.botClient;
-    const hasPerms = await this.checkPrivilege(room, sender);
+    const hasPerms = await this.checkPrivilege(room, room, sender);
 
     if (!hasPerms) {
       return;
@@ -156,16 +180,33 @@ export class CmdManager {
   private async bridge(room: string, sender: string, args: string[]) {
     const client = this.appservice.botClient;
 
+    if (!this.checkWhitelist(sender)) {
+      await client.sendNotice(room,
+        "You are not whitelisted in the bridge config");
+      return;
+    }
+
     try {
       // Get the room they're referring to
       const target = await client.resolveRoom(args[2] || '');
-      if (!target) {
-        await client.sendNotice(room, "That room doesn't exist");
+
+      // Make sure the bot is present in the room, otherwise any privilege
+      // check we do may use stale power levels.
+      // We probably shouldn't just try joining in case the user isn't actually
+      // allowed to start bridging there.
+      // NOTE the matrix-bot-sdk's MatrixClient already has this cached, but
+      // its private so we can't use it.
+      const joinedRoomIds = await client.getJoinedRooms();
+      if (joinedRoomIds.indexOf(target) === -1) {
+        const userId = await client.getUserId();
+        await client.sendNotice(room,
+          'Bridge bot is not in that room. ' +
+          `Please invite ${userId} to the room and try again.`);
         return;
       }
 
       // See if the user has state_default perms
-      const hasPerms = await this.checkPrivilege(room, sender);
+      const hasPerms = await this.checkPrivilege(room, target, sender);
       if (hasPerms) {
         const bridge = this.main.bridges.bridge(target);
         await client.sendNotice(
@@ -192,15 +233,10 @@ export class CmdManager {
 
     try {
       // Get the room they're referring to
-      const target = await client.resolveRoom(args[2] || '');
-
-      if (!target) {
-        await client.sendNotice(room, "That room doesn't exist");
-        return;
-      }
+      const target = await client.resolveRoom(args[2] || room);
 
       // See if the user has state_default perms
-      const hasPerms = await this.checkPrivilege(room, sender);
+      const hasPerms = await this.checkPrivilege(room, target, sender);
 
       if (hasPerms) {
         const unbridged = this.main.bridges.unbridge(target);

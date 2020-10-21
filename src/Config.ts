@@ -11,6 +11,7 @@ export type AppserviceConfig = {
   bindAddress: string;
   port: number;
   regPath: string;
+  userWhitelist: string[] | undefined;
 }
 
 export type WebserverConfig = {
@@ -35,7 +36,8 @@ export class Config {
       bindAddress: '0.0.0.0',
       homeserverName: 'matrix.org',
       homeserverURL: 'https://matrix.org',
-      regPath: Config.configRoot + '/appservice.yaml'
+      regPath: Config.configRoot + '/appservice.yaml',
+      userWhitelist: []
     };
     this.webserver = {
       privKey: uuid(),
