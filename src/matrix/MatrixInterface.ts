@@ -1,6 +1,7 @@
 import * as matrix from "matrix-bot-sdk";
 import { LogService } from "matrix-bot-sdk";
 import { ProfileCache, MatrixProfile } from "matrix-bot-sdk";
+import he from 'he';
 import { RegManager } from "./internal/RegManager";
 import { Config } from "../Config";
 import type { Main } from "../Main";
@@ -8,6 +9,9 @@ import { Bridge } from "../bridging";
 import { CmdManager } from "./internal/CmdManager";
 import { MsgProcessor } from "./internal/MsgProcessor";
 import type { MxEvents, MCEvents } from "../minecraft";
+import { MxTypes } from './internal/types';
+
+const { escape } = he;
 
 
 export type MxMessage = {
@@ -15,6 +19,16 @@ export type MxMessage = {
   room: string;
   body?: string;
   event: MxEvents.Event;
+}
+
+/**
+ * The interpretation of a Minecraft formatting code, including the HTML tag to
+ * use, the 24-bit colour, and whether to reset existing formatting.
+ */
+type McFormatCode = {
+  tag?: string;
+  col?: number;
+  reset?: boolean;
 }
 
 /**
@@ -72,6 +86,116 @@ export class MatrixInterface {
     await this.appservice.begin();
   }
 
+  private static interpretMcColourCode(colourCode: number): McFormatCode {
+    let col = 0x000000;
+    if (colourCode & 0x1) // blue
+      col |= 0x0000AA;
+    if (colourCode & 0x2) // green
+      col |= 0x00AA00;
+    if (colourCode & 0x4) // red
+      col |= 0xAA0000;
+    if (colourCode & 0x8) // light
+      col |= 0x555555;
+    if (colourCode == 6) // gold
+      col |= 0xff0000;
+    return {
+      tag: 'font',
+      col: col,
+      reset: true   // (Java edition only)
+    };
+  }
+
+  private static interpretMcFormatCode(fmt: string): McFormatCode {
+    // Colour codes
+    fmt = fmt.toLowerCase();
+    if (fmt >= '0' && fmt <= '9')
+      return this.interpretMcColourCode(fmt.charCodeAt(0) - '0'.charCodeAt(0));
+    else if (fmt >= 'a' && fmt <= 'f')
+      return this.interpretMcColourCode(0xa + fmt.charCodeAt(0) - 'a'.charCodeAt(0));
+    // Formatting codes
+    else if (fmt == 'l') return { tag: 'b' };      // bold
+    else if (fmt == 'm') return { tag: 'strike' }; // strikethrough
+    else if (fmt == 'n') return { tag: 'u' };      // underline
+    else if (fmt == 'o') return { tag: 'i' };      // italic
+    // Reset code
+    else if (fmt == 'r') return { reset: true };
+
+    return {};
+  }
+
+  /**
+   * This intakes a Minecraft chat message and formats it as a matrix message.
+   * Implemented with help from https://minecraft.gamepedia.com/Formatting_codes
+   * @param {MCEvents.Message} mcMessage
+   * @returns {any} Matrix m.room.message content
+   */
+  public static formatMcMessage(mcMessage: MCEvents.Message): any {
+    let content: MxTypes.Text = {
+      msgtype: "m.text",
+      body: mcMessage.message,
+    };
+    // Interpret and strip any Minecraft formatting codes from the body,
+    // producing corresponding Matrix HTML for it if necessary.
+    let useFormatting: boolean = false;
+    let formatted = '';
+    let body = '';
+    let tags: string[] = [];
+    let pendingTags: string[] = [];
+    let pendingTagsStr: string = '';
+    const regex = /(\u00a7(.))?([^\u00a7]*)/g;
+    const matches = content.body.matchAll(regex);
+    for (const match of matches) {
+      let fmt = match[2];
+      const lit = match[3];
+      if (fmt) {
+        let info: McFormatCode = this.interpretMcFormatCode(fmt);
+        if (info.reset) {
+          // Close any open tags
+          pendingTags = [];
+          pendingTagsStr = '';
+          while (tags.length) {
+            let tag = tags.pop();
+            formatted += `</${tag}>`
+          }
+        }
+        if (info.col !== undefined) {
+          pendingTags = ['font'];
+          pendingTagsStr = `<font color="#${info.col.toString(16).padStart(6, '0')}">`;
+        } else if (info.tag) {
+          // No need to repeat the tag
+          if (pendingTags.indexOf(info.tag) == -1 ||
+              tags.indexOf(info.tag) == -1) {
+            pendingTags.push(info.tag);
+            pendingTagsStr += `<${info.tag}>`
+          }
+        }
+      }
+      if (lit) {
+        // Handle lazy tags
+        formatted += pendingTagsStr;
+        tags = tags.concat(pendingTags);
+        pendingTags = [];
+        pendingTagsStr = '';
+
+        if (tags.length)
+          useFormatting = true;
+        formatted += escape(lit);
+        body += lit;
+      }
+    }
+    content.body = body;
+    if (useFormatting) {
+      // Close any open tags
+      while (tags.length) {
+        let tag = tags.pop();
+        formatted += `</${tag}>`
+      }
+      content.format = 'org.matrix.custom.html';
+      content.formatted_body = formatted;
+    }
+    return content;
+  }
+
   /**
    * This intakes a Minecraft chat message and relays it the provided bridged
    * room.
@@ -105,9 +229,9 @@ export class MatrixInterface {
       LogService.error('marco-matrix', errMessage);
     } finally {
       // what matters most is that the message gets to the room.
-      await intent.sendText(
+      await intent.sendEvent(
         bridge.room,
-        mcMessage.message
+        MatrixInterface.formatMcMessage(mcMessage)
       );
     }
   }
