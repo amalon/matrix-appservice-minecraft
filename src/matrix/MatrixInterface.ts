@@ -57,7 +57,7 @@ export class MatrixInterface {
     let registration = RegManager.getRegistration(config);
 
     this.main = marco;
-    this.msgProcessor = new MsgProcessor(this);
+    this.msgProcessor = new MsgProcessor(this, config);
     this.appservice = new matrix.Appservice({
       registration,
       bindAddress: config.appservice.bindAddress,
@@ -376,7 +376,32 @@ export class MatrixInterface {
    * @returns {string}
    */
   public getPlayerUUID(user: string): string | undefined {
-    return this.appservice.getSuffixForUserId(user);
+    // The bot mxid looks a bit like a player mxid
+    if (user != this.appservice.botUserId)
+      return this.appservice.getSuffixForUserId(user);
+  }
+
+  /**
+   * This checks if the user has a power level sufficient for room notifications
+   * @param {string} roomId Room to check
+   * @param {string} userId User checking
+   * @returns {Promise<boolean>}
+   */
+  public async checkRoomNotifyPrivilege(roomId: string, userId: string): Promise<boolean> {
+    const client = this.appservice.botClient;
+    const powerLevels = await client.getRoomStateEvent(roomId, 'm.room.power_levels', '');
+    if (!powerLevels)
+      return false;
+
+    let requiredPower = 50;
+    if (powerLevels['notifications'] && powerLevels['notifications']['room'])
+      requiredPower = powerLevels['notifications']['room'];
+
+    let userPower = 0;
+    if (powerLevels['users'] && powerLevels['users'][userId])
+      userPower = powerLevels['users'][userId];
+
+    return userPower >= requiredPower;
   }
 
   /**
