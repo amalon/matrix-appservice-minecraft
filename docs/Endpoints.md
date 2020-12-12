@@ -226,3 +226,21 @@ The provided JSON web token describes what room the server is bridged with.
 
 #### Response Body:
 None (200 OK)
+
+### POST /player/death
+This endpoint is for notifying the bridged Matrix room of a Minecraft player's
+death.
+
+#### Required Headers:
+The provided JSON web token describes what room the server is bridged with.
+ - Content-Type: `application/json`
+ - Authorization: `Bearer <JSON WEB TOKEN>`
+
+#### Request Body:
+| Attribute | Type   | Description                           |
+|-----------|--------|---------------------------------------|
+| message   | string | The death message                     |
+| player    | Player | The player who died                   |
+
+#### Response Body:
+None (200 OK)

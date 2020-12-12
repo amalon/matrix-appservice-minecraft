@@ -5,6 +5,7 @@ import express, { Request } from 'express';
 import { postJoin } from "./postJoin";
 import { postQuit } from "./postQuit";
 import { postKick, checkKickIntegrity } from "./postKick";
+import { postDeath, checkDeathIntegrity } from "./postDeath";
 import { validatePost, handlePostAsync, checkPlayerIntegrity } from "../../validate";
 import { LogService } from "matrix-bot-sdk";
 
@@ -38,3 +39,11 @@ handlePostAsync(playerRouter, '/quit', postQuit);
 validatePost(playerRouter, '/kick', checkPlayerIntegrity);
 validatePost(playerRouter, '/kick', checkKickIntegrity);
 handlePostAsync(playerRouter, '/kick', postKick);
+
+/**
+ * POST /player/death/
+ * Polo will call this endpoint when a player dies
+ */
+validatePost(playerRouter, '/death', checkPlayerIntegrity);
+validatePost(playerRouter, '/death', checkDeathIntegrity);
+handlePostAsync(playerRouter, '/death', postDeath);

@@ -331,6 +331,51 @@ export class MatrixInterface {
   }
 
   /**
+   * This intakes a Minecraft player death event and formats it as a matrix
+   * message.
+   * @param {MCEvents.Death} mcDeath
+   * @returns {any} Matrix m.room.message content
+   */
+  public async formatMcDeath(mcDeath: MCEvents.Death): Promise<any> {
+    const uuid = await mcDeath.player.getUUID();
+    const mxid = this.appservice.getUserIdForSuffix(uuid);
+    let content: MxTypes.Notice = {
+      msgtype: "m.notice",
+      body: mcDeath.message,
+    };
+
+    // Look for the player name at the beginning and turn it into a mention
+    let matches: string[] = [
+      await mcDeath.player.getName(),
+      await mcDeath.player.getDisplayName()
+    ];
+    for (let match of matches) {
+      if (mcDeath.message.startsWith(match)) {
+        content.format = 'org.matrix.custom.html';
+        content.formatted_body = `<a href="https://matrix.to/#/${escape(mxid)}">${escape(match)}</a>${escape(mcDeath.message.slice(match.length))}`;
+        break;
+      }
+    }
+    console.log(content);
+    return content;
+  }
+
+  /**
+   * This intakes a Minecraft death event and relays it the provided bridged
+   * room.
+   * @param {Bridge} bridge
+   * @param {MCEvents.Death} mcDeath
+   * @returns {Promise<void>}
+   */
+  public async sendDeath(bridge: Bridge, mcDeath: MCEvents.Death): Promise<void> {
+    // This is the MatrixClient representing Matrix bot user
+    const client = this.appservice.botClient;
+
+    // Notify the room
+    client.sendMessage(bridge.room, await this.formatMcDeath(mcDeath));
+  }
+
+  /**
    * This returns all the new room messages of a given bridge since the
    * last time requested.
    * @param {Bridge} bridge

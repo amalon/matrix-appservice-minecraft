@@ -226,6 +226,16 @@ export module MCEvents {
   export interface Kick extends Event {
     reason: string;
   }
+
+  /**
+   * This represents a player death.
+   * @type Death
+   * @prop {Player} player The player that died
+   * @prop {string} message The death message
+   */
+  export interface Death extends Event {
+    message: string;
+  }
 }
 
 

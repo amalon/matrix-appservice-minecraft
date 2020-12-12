@@ -132,4 +132,18 @@ export class Main {
   public kickToMatrix(bridge: Bridge, kick: MCEvents.Kick) {
     return this.matrix.sendKick(bridge, kick);
   }
+
+  /**
+   * This handles Minecraft death events provided by a Minecraft server
+   * Minecraft (POST Request) Player death event ->        WebInterface
+   * Minecraft (POST Response)                   <- 200 OK WebInterface
+   *
+   * @param {Bridge} bridge Bridged room
+   * @param {MCEvents.Death} death Death event to send
+   * @returns {Promise<void>}
+   * @throws {NotBridgedError}
+   */
+  public deathToMatrix(bridge: Bridge, death: MCEvents.Death) {
+    return this.matrix.sendDeath(bridge, death);
+  }
 }
