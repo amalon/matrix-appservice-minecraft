@@ -1,3 +1,4 @@
+import { MatrixProfile } from "matrix-bot-sdk";
 import { MatrixInterface, MxMessage } from "../MatrixInterface";
 import { MxEvents } from "../../minecraft";
 import { Player } from "../../minecraft/internal/Player";
@@ -17,8 +18,8 @@ export class MsgProcessor {
     const content = event['content'];
     const sender = event['sender'];
     const body = content['body'];
-    const roomMember = await this.matrix.getRoomMember(room, sender);
-    const name: string = roomMember['displayname'] || sender;
+    const senderProfile = await this.matrix.getUserProfile(sender, room);
+    const name: string = senderProfile.displayName;
 
     return {
       sender: sender,
@@ -47,8 +48,8 @@ export class MsgProcessor {
     const content = event['content'];
     const sender = event['sender'];
     const body = content['body'];
-    const roomMember = await this.matrix.getRoomMember(room, sender);
-    const name: string = roomMember['displayname'] || sender;
+    const senderProfile = await this.matrix.getUserProfile(sender, room);
+    const name: string = senderProfile.displayName;
 
     return {
       sender: sender,
@@ -72,9 +73,9 @@ export class MsgProcessor {
     const sender = event['sender'];
     const victim = event['state_key'];
 
-    const senderRoomMember = await this.matrix.getRoomMember(room, sender);
+    const senderProfile = await this.matrix.getUserProfile(sender, room);
     const victimUUID: string | undefined = this.matrix.getPlayerUUID(victim);
-    const senderName: string = senderRoomMember['displayname'] || sender;
+    const senderName: string = senderProfile.displayName;
     const victimName: string = prevContent['displayname'] || victimUUID;
 
     return {
@@ -99,9 +100,9 @@ export class MsgProcessor {
     const sender = event['sender'];
     const victim = event['state_key'];
 
-    const senderRoomMember = await this.matrix.getRoomMember(room, sender);
+    const senderProfile = await this.matrix.getUserProfile(sender, room);
     const victimUUID: string | undefined = this.matrix.getPlayerUUID(victim);
-    const senderName: string = senderRoomMember['displayname'] || sender;
+    const senderName: string = senderProfile.displayName;
     const victimName: string = prevContent['displayname'] || victimUUID;
 
     return {
@@ -124,9 +125,9 @@ export class MsgProcessor {
     const sender = event['sender'];
     const victim = event['state_key'];
 
-    const senderRoomMember = await this.matrix.getRoomMember(room, sender);
+    const senderProfile = await this.matrix.getUserProfile(sender, room);
     const victimUUID: string | undefined = this.matrix.getPlayerUUID(victim);
-    const senderName: string = senderRoomMember['displayname'] || sender;
+    const senderName: string = senderProfile.displayName;
     const victimName: string = prevContent['displayname'] || victimUUID;
 
     return {

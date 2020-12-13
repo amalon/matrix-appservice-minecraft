@@ -1,5 +1,6 @@
 import * as matrix from "matrix-bot-sdk";
 import { LogService } from "matrix-bot-sdk";
+import { ProfileCache, MatrixProfile } from "matrix-bot-sdk";
 import { RegManager } from "./internal/RegManager";
 import { Config } from "../Config";
 import type { Main } from "../Main";
@@ -35,6 +36,8 @@ export class MatrixInterface {
   // Converts matrix messages into McMessages
   private readonly msgProcessor: MsgProcessor;
 
+  private readonly profileCache: ProfileCache;
+
 
   constructor(config: Config, marco: Main) {
     let registration = RegManager.getRegistration(config);
@@ -50,6 +53,8 @@ export class MatrixInterface {
     });
     this.cmdManager = new CmdManager(this.appservice, this.main, config);
     this.newMxMessages = new Map();
+    this.profileCache = new ProfileCache(128, 30*1000*1000, this.appservice.botClient);
+    this.profileCache.watchWithAppservice(this.appservice);
   }
 
   /**
@@ -232,17 +237,13 @@ export class MatrixInterface {
   }
 
   /**
-   * This gets the m.room.member state event of a provided Matrix ID and room
-   * @param {string} room The room to retrieve the profile data from
+   * This gets the profile of a provided Matrix ID in a room
    * @param {string} user The user being retrieved
+   * @param {string} roomId The room to retrieve the profile data from
    * @returns {Promise<any>}
    */
-  public async getRoomMember(room: string, user: string): Promise<any> {
-    return this.appservice.botClient.getRoomStateEvent(
-      room,
-      'm.room.member',
-      user
-    );
+  public getUserProfile(user: string, roomId: string): Promise<MatrixProfile> {
+    return this.profileCache.getUserProfile(user, roomId);
   }
 
   /**
