@@ -48,12 +48,30 @@ export const noMessageError = {
 };
 
 /**
+ * Polo didn't provide a reason
+ * @const noReasonError
+ */
+export const noReasonError = {
+  "error": "NO_REASON",
+  "message": "Provide a reason property"
+};
+
+/**
  * Polo provided a message but it's not a string
  * @const messageTypeError
  */
 export const messageTypeError = {
   "error": "MESSAGE_TYPE",
   "message": "The message property must be type of string"
+};
+
+/**
+ * Polo provided a reason but it's not a string
+ * @const reasonTypeError
+ */
+export const reasonTypeError = {
+  "error": "REASON_TYPE",
+  "message": "The reason property must be type of string"
 };
 
 /**

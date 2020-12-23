@@ -3,6 +3,8 @@ import type { Config } from "../Config";
 import type { Main } from "../Main";
 import { BridgeError } from "../bridging";
 import { chatRouter } from "./internal/routes";
+import { playerRouter } from "./internal/routes";
+import { getEvents } from "./internal/getEvents";
 import { LogService } from "matrix-bot-sdk";
 import { v1 as uuid } from "uuid";
 import * as Errors from "./internal/errors";
@@ -28,9 +30,17 @@ export class WebInterface {
 
     // Check all authorization headers at these endpoints
     app.use('/chat', this.checkAuth.bind(this));
+    app.use('/events', this.checkAuth.bind(this));
+    app.use('/player', this.checkAuth.bind(this));
 
     // Chat endpoint for getting messages and posting minecraft chat messages
     app.use('/chat', chatRouter);
+
+    // Events endpoint for getting messages and events from Matrix
+    app.get('/events', getEvents);
+
+    // Player endpoint for posting minecraft player events
+    app.use('/player', playerRouter);
   }
 
   /**

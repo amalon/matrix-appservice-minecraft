@@ -3,7 +3,7 @@ import { Config } from "./Config";
 import { Bridge, BridgeManager } from "./bridging";
 import { MatrixInterface } from "./matrix";
 import { DBController } from "./db";
-import { MCEvents, PlayerManager } from "./minecraft";
+import { MxEvents, MCEvents, PlayerManager } from "./minecraft";
 import { MxMessage } from "./matrix/MatrixInterface";
 
 
@@ -71,9 +71,9 @@ export class Main {
    * This gets all the new messages from a bridged Matrix room
    * Minecraft (GET Request)  ->           WebInterface
    * Minecraft (GET Response) <- string[]  WebInterface
-   * @returns {string[]}
+   * @returns {MxEvents.Event[]}
    */
-  public getNewMxMessages(bridge: Bridge): string[] {
+  public getNewMxMessages(bridge: Bridge): MxEvents.Event[] {
     return this.matrix.getNewMxMessages(bridge);
   }
 
@@ -89,5 +89,47 @@ export class Main {
    */
   public sendToMatrix(bridge: Bridge, message: MCEvents.Message) {
     return this.matrix.sendMessage(bridge, message);
+  }
+
+  /**
+   * This handles Minecraft join events provided by a Minecraft server
+   * Minecraft (POST Request) Player join event ->        WebInterface
+   * Minecraft (POST Response)                  <- 200 OK WebInterface
+   *
+   * @param {Bridge} bridge Bridged room
+   * @param {MCEvents.Join} join Join event to send
+   * @returns {Promise<void>}
+   * @throws {NotBridgedError}
+   */
+  public joinToMatrix(bridge: Bridge, join: MCEvents.Join) {
+    return this.matrix.sendJoin(bridge, join);
+  }
+
+  /**
+   * This handles Minecraft quit events provided by a Minecraft server
+   * Minecraft (POST Request) Player quit event ->        WebInterface
+   * Minecraft (POST Response)                  <- 200 OK WebInterface
+   *
+   * @param {Bridge} bridge Bridged room
+   * @param {MCEvents.Quit} quit Quit event to send
+   * @returns {Promise<void>}
+   * @throws {NotBridgedError}
+   */
+  public quitToMatrix(bridge: Bridge, quit: MCEvents.Quit) {
+    return this.matrix.sendQuit(bridge, quit);
+  }
+
+  /**
+   * This handles Minecraft kick events provided by a Minecraft server
+   * Minecraft (POST Request) Player kick event ->        WebInterface
+   * Minecraft (POST Response)                  <- 200 OK WebInterface
+   *
+   * @param {Bridge} bridge Bridged room
+   * @param {MCEvents.Kick} kick Kick event to send
+   * @returns {Promise<void>}
+   * @throws {NotBridgedError}
+   */
+  public kickToMatrix(bridge: Bridge, kick: MCEvents.Kick) {
+    return this.matrix.sendKick(bridge, kick);
   }
 }

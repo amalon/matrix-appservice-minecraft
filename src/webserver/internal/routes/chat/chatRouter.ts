@@ -3,7 +3,8 @@
  */
 import express, { Request } from 'express';
 import { getChat } from "./getChat";
-import { checkIntegrity, postChat } from "./postChat";
+import { checkChatIntegrity, postChat } from "./postChat";
+import { validatePost, handlePostAsync, handleGet, checkPlayerIntegrity } from "../../validate";
 import { LogService } from "matrix-bot-sdk";
 
 
@@ -19,50 +20,13 @@ chatRouter.use('/', (_, res, next) => {
  * GET /chat/
  * Polo will call this endpoint to get all the messages from the Matrix room
  */
-chatRouter.get('/', ((req, res) => {
-  try {
-    getChat(req, res);
-  } catch (err) {
-    errorHandler(req, err);
-  }
-}));
-
-// this checks to make sure Polo is calling this endpoint properly
-chatRouter.post('/', ((req, res, next) => {
-  try {
-    checkIntegrity(req, res, next);
-  } catch (err) {
-    errorHandler(req, err);
-  }
-}));
+handleGet(chatRouter, '/', getChat);
 
 /**
  * POST /chat/
  * Polo will call this endpoint when there's a new message in the
  * Minecraft chat
  */
-chatRouter.post('/', (async (req, res) => {
-  try {
-    await postChat(req, res);
-  } catch (err) {
-    errorHandler(req, err);
-  }
-}));
-
-function errorHandler(req: Request, err: any): void {
-  // @ts-ignore
-  const id = req['id'];
-  if (err instanceof Error) {
-    LogService.error(
-      'marco-webserver',
-      `Request ${id}`,
-      err.message,
-    );
-  } else {
-    LogService.error(
-      'marco-webserver',
-      `Request ${id}`,
-      err
-    );
-  }
-}
+validatePost(chatRouter, '/', checkPlayerIntegrity);
+validatePost(chatRouter, '/', checkChatIntegrity);
+handlePostAsync(chatRouter, '/', postChat);

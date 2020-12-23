@@ -1,19 +1,18 @@
 import { NextFunction, Request, Response } from "express";
-import * as Errors from "../../errors";
-import { fail } from "../../validate";
 import { Main } from "../../../../Main";
 import { Bridge } from "../../../../bridging";
 import { LogService } from "matrix-bot-sdk";
 import { MCEvents } from "../../../../minecraft";
+import { fail } from "../../validate";
+import * as Errors from "../../errors";
 
 
 /**
- * POST /chat/
- * Polo will call this endpoint when there's a new message in the Minecraft
- * chat
+ * POST /player/kick
+ * Polo will call this endpoint when a user gets kicked from the Minecraft server
  * Example body:
  * {
- *   "message": <player message string>,
+ *   "reason": <kick reason>,
  *   "player": {
  *     "name": <player name string>,
  *     "uuid": <player uuid string>
@@ -23,7 +22,7 @@ import { MCEvents } from "../../../../minecraft";
  * @param {Response} res
  * @returns {Promise<void>}
  */
-export async function postChat(req: Request, res: Response): Promise<void> {
+export async function postKick(req: Request, res: Response): Promise<void> {
   // @ts-ignore
   const main: Main = req['main'];
   // @ts-ignore
@@ -31,20 +30,21 @@ export async function postChat(req: Request, res: Response): Promise<void> {
   // @ts-ignore
   const id: string = req['id'];
   const body = req.body;
-  const message: string = body['message'];
+  const reason: string = body['reason'];
   const playerRaw: { name: string, uuid: string } = body.player;
   const player = await main.players.getPlayer(playerRaw.name, playerRaw.uuid);
-  const mcMessage: MCEvents.Message = {
-    message,
+  const mcKick: MCEvents.Kick = {
+    reason,
     player
   }
 
-  await main.sendToMatrix(bridge, mcMessage);
+  await main.kickToMatrix(bridge, mcKick);
   res.status(200);
   res.end();
   LogService.info(
-    'WebInterface',
-    `[Request ${id}]: Finished`
+    'marco-webserver',
+    `Request ${id}`,
+    '- Finished.'
   );
 }
 
@@ -55,35 +55,35 @@ export async function postChat(req: Request, res: Response): Promise<void> {
  * @param {Response} res
  * @param {NextFunction} next
  */
-export function checkChatIntegrity(req: Request, res: Response, next: NextFunction) {
+export function checkKickIntegrity(req: Request, res: Response, next: NextFunction) {
   // @ts-ignore
   const reqID = req['id'];
   const body = req.body;
 
   LogService.info(
     'WebInterface',
-    `[Request ${reqID}]: Checking Chat Body Integrity`
+    `[Request ${reqID}]: Checking Kick Body Integrity`
   );
 
-  // Check message
-  const message = body['message'];
-  if (message == undefined) {
-    fail(res, Errors.noMessageError);
+  // Check reason
+  const reason = body['reason'];
+  if (reason == undefined) {
+    fail(res, Errors.noReasonError);
     return;
-  } else if (!(typeof message == 'string')) {
-    fail(res, Errors.messageTypeError);
+  } else if (!(typeof reason == 'string')) {
+    fail(res, Errors.reasonTypeError);
     return;
   }
 
   LogService.debug(
     'WebInterface',
-    `[Request ${reqID}]: Message "${message}"`
+    `[Request ${reqID}]: Reason "${reason}"`
   )
 
   /**
    * If the integrity passed this is what the body should look like:
    * {
-   *   "message": "The body of the message",
+   *   "reason": "The reason for the kick",
    *   "player" {
    *     "name": "player name",
    *     "uuid": "player uuid"

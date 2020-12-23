@@ -6,13 +6,14 @@ import type { Main } from "../Main";
 import { Bridge } from "../bridging";
 import { CmdManager } from "./internal/CmdManager";
 import { MsgProcessor } from "./internal/MsgProcessor";
-import type { MCEvents } from "../minecraft";
+import type { MxEvents, MCEvents } from "../minecraft";
 
 
 export type MxMessage = {
   sender: string;
   room: string;
-  body: string;
+  body?: string;
+  event: MxEvents.Event;
 }
 
 /**
@@ -28,7 +29,7 @@ export class MatrixInterface {
   public readonly appservice: matrix.Appservice;
   private readonly main: Main;
   // Collects new messages for Minecraft servers
-  private readonly newMxMessages: Map<string, string[]>
+  private readonly newMxMessages: Map<string, MxEvents.Event[]>
   // Handles commands given by Matrix users
   private readonly cmdManager: CmdManager;
   // Converts matrix messages into McMessages
@@ -60,6 +61,8 @@ export class MatrixInterface {
     matrix.AutojoinRoomsMixin.setupOnAppservice(this.appservice);
 
     this.appservice.on('room.message', this.onMxMessage.bind(this));
+    this.appservice.on('room.leave', this.onMxLeave.bind(this));
+    this.appservice.on('query.user', this.onQueryUser.bind(this));
 
     await this.appservice.begin();
   }
@@ -105,12 +108,106 @@ export class MatrixInterface {
   }
 
   /**
+   * This intakes a Minecraft join event and relays it the provided bridged
+   * room.
+   * @param {Bridge} bridge
+   * @param {MCEvents.Join} mcJoin
+   * @returns {Promise<void>}
+   */
+  public async sendJoin(bridge: Bridge, mcJoin: MCEvents.Join): Promise<void> {
+    // The player UUID is the Matrix appservice user's Matrix ID
+    const uuid = await mcJoin.player.getUUID();
+    // This is the representing Matrix user
+    const intent = this.appservice.getIntentForSuffix(uuid);
+
+    try {
+      await intent.ensureRegistered();
+      // Keep the player name, skin in sync with their profile data on Matrix
+      await this.main.players.sync(intent, mcJoin.player);
+
+      // Finally send the message to the room, half of these steps are
+      // skipped to this if everything has already been completed before
+      // (such as inviting, joining, and syncing unless the player updated a
+      // certain detail that we keep synced)
+    } catch (err) {
+      let errMessage = 'An error occurred while joining a bridged room.\n'
+      if (err instanceof Error) {
+        errMessage += ` - message: ${err.message}\n`;
+        errMessage += ` - stack:\n${err.stack}`;
+      } else {
+        errMessage += ' - error: ' + err;
+      }
+      LogService.error('marco-matrix', errMessage);
+    } finally {
+      // what matters most is that the room is joined.
+      await intent.joinRoom(
+        bridge.room
+      );
+    }
+  }
+
+  /**
+   * This intakes a Minecraft quit event and relays it the provided bridged
+   * room.
+   * @param {Bridge} bridge
+   * @param {MCEvents.Quit} mcQuit
+   * @returns {Promise<void>}
+   */
+  public async sendQuit(bridge: Bridge, mcQuit: MCEvents.Quit): Promise<void> {
+    // The player UUID is the Matrix appservice user's Matrix ID
+    const uuid = await mcQuit.player.getUUID();
+    // This is the representing Matrix user
+    const intent = this.appservice.getIntentForSuffix(uuid);
+
+    try {
+      await intent.ensureRegistered();
+      // We don't bother keeping the player name, skin in sync with their
+      // profile data on Matrix right now, since the player is leaving
+
+      // Finally send the event to the room, half of these steps are
+      // skipped to this if everything has already been completed before
+      // (such as inviting & joining)
+    } catch (err) {
+      let errMessage = 'An error occurred while leaving a bridged room.\n'
+      if (err instanceof Error) {
+        errMessage += ` - message: ${err.message}\n`;
+        errMessage += ` - stack:\n${err.stack}`;
+      } else {
+        errMessage += ' - error: ' + err;
+      }
+      LogService.error('marco-matrix', errMessage);
+    } finally {
+      // what matters most is that the room is left.
+      await intent.leaveRoom(
+        bridge.room
+      );
+    }
+  }
+
+  /**
+   * This intakes a Minecraft kick event and relays it the provided bridged
+   * room.
+   * @param {Bridge} bridge
+   * @param {MCEvents.Kick} mcKick
+   * @returns {Promise<void>}
+   */
+  public async sendKick(bridge: Bridge, mcKick: MCEvents.Kick): Promise<void> {
+    // The player UUID is the Matrix appservice user's Matrix ID
+    const uuid = await mcKick.player.getUUID();
+    // This is the representing Matrix bot user
+    const client = this.appservice.botClient;
+
+    // Perform the kick
+    client.kickUser(this.appservice.getUserIdForSuffix(uuid), bridge.room, mcKick.reason);
+  }
+
+  /**
    * This returns all the new room messages of a given bridge since the
    * last time requested.
    * @param {Bridge} bridge
-   * @returns {string[]}
+   * @returns {MxEvents.Event[]}
    */
-  public getNewMxMessages(bridge: Bridge): string[] {
+  public getNewMxMessages(bridge: Bridge): MxEvents.Event[] {
     let newMxMessages = this.newMxMessages.get(bridge.room);
 
     if (!newMxMessages) {
@@ -129,7 +226,7 @@ export class MatrixInterface {
     const newMxMessages = this.newMxMessages.get(message.room) || [];
 
     if (!this.appservice.isNamespacedUser(message.sender))
-      newMxMessages.push(message.body);
+      newMxMessages.push(message.event);
 
     this.newMxMessages.set(message.room, newMxMessages);
   }
@@ -146,6 +243,15 @@ export class MatrixInterface {
       'm.room.member',
       user
     );
+  }
+
+  /**
+   * This gets the Minecraft player UUID corresponding to the provided Matrix ID
+   * @param {string} user The user being retrieved
+   * @returns {string}
+   */
+  public getPlayerUUID(user: string): string | undefined {
+    return this.appservice.getSuffixForUserId(user);
   }
 
   /**
@@ -190,5 +296,59 @@ export class MatrixInterface {
       // Give it to Main to handle
       this.main.sendToMinecraft(message);
     }
+  }
+
+  /**
+   * This intakes m.room.member state events due to leaving, kicking, banning &
+   * unbanning. It checks if the member change is a kick, a ban, or an unban.
+   * If it is then it processes the state change and sends it to
+   * Main.something.
+   * @param {string} room Room Matrix ID
+   * @param {any} event m.room.member state event
+   */
+  private async onMxLeave(room: string, event: any): Promise<void> {
+    // Check if the m.room.member state event was sent in a bridged room
+    const isBridged = this.main.bridges.isRoomBridged(room);
+    if (!isBridged)
+      return;
+
+    // Check it relates to one of our Minecraft users
+    const stateKey: string = event['state_key'];
+    if (!this.appservice.isNamespacedUser(stateKey))
+      return;
+
+    const content: any | undefined = event['content'];
+    const oldContent: any | undefined = event['prev_content'] || {};
+    const membership: string = content['membership'];
+    const oldMembership: string = oldContent['membership'] || "leave";
+    const sender: string = event['sender'];
+
+    if (membership == 'ban') {
+      let message = await this.msgProcessor.buildBanMsg(room, event);
+
+      // Give it to Main to handle
+      this.main.sendToMinecraft(message);
+    } else if (oldMembership == 'ban') {
+      let message = await this.msgProcessor.buildUnbanMsg(room, event);
+
+      // Give it to Main to handle
+      this.main.sendToMinecraft(message);
+    } else if (membership == 'leave' && oldMembership == 'join') {
+      let message = await this.msgProcessor.buildKickMsg(room, event);
+
+      // Give it to Main to handle
+      this.main.sendToMinecraft(message);
+    }
+  }
+
+  /**
+   * This queries a Minecraft user that doesn't exist, allowing the appservice
+   * to arrange for it to be created.
+   * @param {string} user User Matrix ID
+   * @param {createUser} Function Callback to create the new user
+   */
+  private async onQueryUser(user: string, createUser: Function): Promise<void> {
+    // Refuse to automatically create arbitrary new users for now
+    createUser(false);
   }
 }
